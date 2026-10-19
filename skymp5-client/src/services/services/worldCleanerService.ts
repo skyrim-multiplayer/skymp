@@ -1,19 +1,23 @@
-import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { NiPoint3 } from "../../sync/movement";
-import { ObjectReferenceEx } from "../../extensions/objectReferenceEx";
-import { Actor } from "skyrimPlatform";
-import { logTrace } from "../../logging";
+import { Actor } from 'skyrimPlatform';
+
+import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
+import { logTrace } from '../../logging';
+import { NiPoint3 } from '../../sync/movement';
+import { ClientListener, CombinedController, Sp } from './clientListener';
 
 export class WorldCleanerService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
-    this.controller.on("update", () => this.onUpdate());
-    this.controller.emitter.on("gameLoad", () => this.onGameLoad());
+    this.controller.on('update', () => this.onUpdate());
+    this.controller.emitter.on('gameLoad', () => this.onGameLoad());
   }
 
   modWcProtection(actorId: number, mod: number): void {
     const currentProtection = this.protection.get(actorId);
-    this.protection.set(actorId, currentProtection ? currentProtection + mod : mod);
+    this.protection.set(
+      actorId,
+      currentProtection ? currentProtection + mod : mod,
+    );
   }
 
   getWcProtection(actorId: number): number {
@@ -44,7 +48,7 @@ export class WorldCleanerService extends ClientListener {
       pc.getPositionX(),
       pc.getPositionY(),
       pc.getPositionZ(),
-      8192
+      8192,
     );
     if (actor === null) {
       return;
@@ -83,7 +87,10 @@ export class WorldCleanerService extends ClientListener {
     // We discovered anomaly chickens that fail to Disable if we load game near to them
     // Refs: 106C22, 106C23
     if (actorId < 0xff000000 && actor.getRace()?.getFormID() === chickenRace) {
-      if (this.initialPos && ObjectReferenceEx.getDistanceNoZ(pos, this.initialPos) < 4096) {
+      if (
+        this.initialPos &&
+        ObjectReferenceEx.getDistanceNoZ(pos, this.initialPos) < 4096
+      ) {
         if (cellOrWorld === this.initialCellOrWorld) {
           if (this.isActorInDialogue(actor)) {
             return;

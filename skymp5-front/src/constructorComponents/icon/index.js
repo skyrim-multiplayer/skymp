@@ -1,8 +1,8 @@
 import React from 'react';
 
+import discordSVG from '../../img/discord.svg';
 import mailSVG from '../../img/mail.svg';
 import passwordSVG from '../../img/password.svg';
-import discordSVG from '../../img/discord.svg';
 import skympSVG from '../../img/skymp.svg';
 
 const Icon = (props) => {

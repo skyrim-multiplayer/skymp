@@ -2,18 +2,16 @@
   "compilerOptions": {
     "noImplicitAny": true,
     "allowJs": true,
-    "module": "commonjs",
+    "module": "Node16",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2022",
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "sourceMap": true,
+    "rootDir": "ts",
     "outDir": "../build/dist/server/dist_back",
-    "baseUrl": ".",
-    "paths": {
-      "*": ["node_modules/*", "src/types/*"]
-    },
     "skipLibCheck": true
   },
-  "include": ["ts"]
+  "include": ["ts"],
+  "exclude": ["ts/examples"]
 }

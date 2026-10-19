@@ -4,8 +4,7 @@
   "description": "",
   "license": "GPL-3.0",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "keywords": [],
   "author": "Pospelov",
   "dependencies": {

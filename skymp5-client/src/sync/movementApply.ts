@@ -1,18 +1,29 @@
 import {
-  ObjectReference,
   Actor,
+  Debug,
   Game,
+  ObjectReference,
   TESModPlatform,
-  Debug
-} from "skyrimPlatform";
-import { RespawnNeededError } from "../lib/errors";
-import { Movement, RunMode, AnimationVariables, Transform, NiPoint3 } from "./movement";
-import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
-import { SpApiInteractor } from "../services/spApiInteractor";
+} from 'skyrimPlatform';
+
+import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import { RespawnNeededError } from '../lib/errors';
+import { SpApiInteractor } from '../services/spApiInteractor';
+import {
+  AnimationVariables,
+  Movement,
+  NiPoint3,
+  RunMode,
+  Transform,
+} from './movement';
 
 const sqr = (x: number) => x * x;
 
-export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: boolean): void => {
+export const applyMovement = (
+  refr: ObjectReference,
+  m: Movement,
+  isMyClone?: boolean,
+): void => {
   if (teleportIfNeed(refr, m)) {
     return;
   }
@@ -20,10 +31,15 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
   // Z axis isn't useful here
   const acX = refr.getPositionX();
   const acY = refr.getPositionY();
-  const lagUnitsNoZ = Math.round(Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)));
+  const lagUnitsNoZ = Math.round(
+    Math.sqrt(sqr(m.pos[0] - acX) + sqr(m.pos[1] - acY)),
+  );
 
   if (isMyClone === true) {
-    SpApiInteractor.getControllerInstance().emitter.emit("newLocalLagValueCalculated", { lagUnitsNoZ });
+    SpApiInteractor.getControllerInstance().emitter.emit(
+      'newLocalLagValueCalculated',
+      { lagUnitsNoZ },
+    );
   }
 
   translateTo(refr, m);
@@ -40,7 +56,7 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
         m.lookAt[0],
         m.lookAt[1],
         m.lookAt[2],
-        128
+        128,
       );
     } catch (e) {
       lookAt = null;
@@ -59,13 +75,16 @@ export const applyMovement = (refr: ObjectReference, m: Movement, isMyClone?: bo
 
   keepOffsetFromActor(ac, m);
 
-  applySprinting(ac, m.runMode === "Sprinting");
+  applySprinting(ac, m.runMode === 'Sprinting');
   applyBlocking(ac, m);
   applySneaking(ac, m.isSneaking);
   applyWeapDrawn(ac, m.isWeapDrawn);
   applyHealthPercentage(ac, m.healthPercentage);
 
-  SpApiInteractor.getControllerInstance().emitter.emit("applyDeathStateEvent", { actor: ac, isDead: m.isDead });
+  SpApiInteractor.getControllerInstance().emitter.emit('applyDeathStateEvent', {
+    actor: ac,
+    isDead: m.isDead,
+  });
 };
 
 const keepOffsetFromActor = (ac: Actor, m: Movement) => {
@@ -74,7 +93,7 @@ const keepOffsetFromActor = (ac: Actor, m: Movement) => {
     offsetAngle = 0;
   }
 
-  if (m.runMode === "Standing") {
+  if (m.runMode === 'Standing') {
     return ac.keepOffsetFromActor(ac, 0, 0, 0, 0, 0, offsetAngle, 1, 1);
   }
   const offset = [
@@ -91,16 +110,16 @@ const keepOffsetFromActor = (ac: Actor, m: Movement) => {
     0,
     0,
     offsetAngle,
-    m.runMode === "Walking" ? 2048 : 1,
+    m.runMode === 'Walking' ? 2048 : 1,
     1,
   );
 };
 
 const getOffsetZ = (runMode: RunMode) => {
   switch (runMode) {
-    case "Walking":
+    case 'Walking':
       return -512;
-    case "Running":
+    case 'Running':
       return -1024;
   }
   return 0;
@@ -108,22 +127,22 @@ const getOffsetZ = (runMode: RunMode) => {
 
 const applySprinting = (ac: Actor, isSprinting: boolean) => {
   if (ac.isSprinting() != isSprinting) {
-    Debug.sendAnimationEvent(ac, isSprinting ? "SprintStart" : "SprintStop");
+    Debug.sendAnimationEvent(ac, isSprinting ? 'SprintStart' : 'SprintStop');
   }
 };
 
 const applyBlocking = (ac: Actor, m: AnimationVariables) => {
-  if (ac.getAnimationVariableBool("IsBlocking") != m.isBlocking) {
-    Debug.sendAnimationEvent(ac, m.isBlocking ? "BlockStart" : "BlockStop");
-    Debug.sendAnimationEvent(ac, m.isSneaking ? "SneakStart" : "SneakStop");
+  if (ac.getAnimationVariableBool('IsBlocking') != m.isBlocking) {
+    Debug.sendAnimationEvent(ac, m.isBlocking ? 'BlockStart' : 'BlockStop');
+    Debug.sendAnimationEvent(ac, m.isSneaking ? 'SneakStart' : 'SneakStop');
   }
 };
 
 const applySneaking = (ac: Actor, isSneaking: boolean) => {
   const currentIsSneaking =
-    ac.isSneaking() || ac.getAnimationVariableBool("IsSneaking");
+    ac.isSneaking() || ac.getAnimationVariableBool('IsSneaking');
   if (currentIsSneaking != isSneaking) {
-    Debug.sendAnimationEvent(ac, isSneaking ? "SneakStart" : "SneakStop");
+    Debug.sendAnimationEvent(ac, isSneaking ? 'SneakStart' : 'SneakStop');
   }
 };
 
@@ -153,10 +172,9 @@ const applyHealthPercentage = (ac: Actor, healthPercentage: number) => {
 const gTempTargetPos: NiPoint3 = [0, 0, 0];
 
 const translateTo = (refr: ObjectReference, m: Movement) => {
-  let time = 0.2;
-  if (m.isInJumpState || m.runMode !== "Standing") {
-    time = 0.2;
-  }
+  // Keep the prediction horizon close to the actual movement send cadence.
+  // A larger fixed window makes remote actors overshoot once updates arrive faster.
+  const time = m.runMode === 'Standing' && !m.isInJumpState ? 0.13 : 0.1;
 
   // Local lag compensation
   // TODO: Remove "|| 0" hack (added to support old MpClientPlugin)
@@ -167,9 +185,9 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
   gTempTargetPos[2] = m.pos[2];
 
   // We do not want to add pos in case of standing-jumping
-  if (m.runMode !== "Standing") {
-    gTempTargetPos[0] += Math.sin(direction / 180 * Math.PI) * distanceAdd;
-    gTempTargetPos[1] += Math.cos(direction / 180 * Math.PI) * distanceAdd;
+  if (m.runMode !== 'Standing') {
+    gTempTargetPos[0] += Math.sin((direction / 180) * Math.PI) * distanceAdd;
+    gTempTargetPos[1] += Math.cos((direction / 180) * Math.PI) * distanceAdd;
   }
 
   const refrRealPos = ObjectReferenceEx.getPos(refr);
@@ -179,14 +197,14 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
 
   const angleDiff = Math.abs(m.rot[2] - refr.getAngleZ());
   if (
-    m.runMode !== "Standing" ||
+    m.runMode !== 'Standing' ||
     m.isInJumpState ||
     ObjectReferenceEx.getDistanceNoZ(refrRealPos, gTempTargetPos) > 8 ||
     angleDiff > 80 ||
     Actor.from(refr)?.getSitState() === 3
   ) {
     const actor = Actor.from(refr);
-    if (actor && actor.getActorValue("Variable10") < -999) {
+    if (actor && actor.getActorValue('Variable10') < -999) {
       return;
     }
 
@@ -199,7 +217,7 @@ const translateTo = (refr: ObjectReference, m: Movement) => {
         m.rot[1],
         m.rot[2],
         speed,
-        0
+        0,
       );
     }
   }
@@ -210,7 +228,7 @@ const teleportIfNeed = (refr: ObjectReference, m: Transform) => {
     isInDifferentWorldOrCell(refr, m.worldOrCell) ||
     (!refr.is3DLoaded() && isInDifferentExteriorCell(refr, m.pos))
   ) {
-    throw new RespawnNeededError("needs to be respawned");
+    throw new RespawnNeededError('needs to be respawned');
   }
   return false;
 };
@@ -221,13 +239,18 @@ const isInDifferentExteriorCell = (refr: ObjectReference, pos: NiPoint3) => {
   const currentPos = ObjectReferenceEx.getPos(refr);
   const playerPos = ObjectReferenceEx.getPos(Game.getPlayer() as Actor);
   const targetDistanceToPlayer = ObjectReferenceEx.getDistance(playerPos, pos);
-  const currentDistanceToPlayer = ObjectReferenceEx.getDistance(playerPos, currentPos);
-  return currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth;
+  const currentDistanceToPlayer = ObjectReferenceEx.getDistance(
+    playerPos,
+    currentPos,
+  );
+  return (
+    currentDistanceToPlayer > cellWidth && targetDistanceToPlayer <= cellWidth
+  );
 };
 
 const isInDifferentWorldOrCell = (
   refr: ObjectReference,
-  worldOrCell: number
+  worldOrCell: number,
 ) => {
   return worldOrCell !== ObjectReferenceEx.getWorldOrCell(refr);
 };

@@ -108,6 +108,8 @@ public:
 
   float spawnDelay = 25.0f;
 
+  bool canRespawn = true;
+
   std::vector<FormDesc> templateChain;
 
   // Used for PlayAnimation (object reference)
@@ -141,7 +143,7 @@ public:
       count, isRaceMenuOpen, isDead, consoleCommandsAllowed, appearanceDump,
       equipment.ToJson(), actorValues.ToTuple(), healthRespawnPercentage,
       magickaRespawnPercentage, staminaRespawnPercentage, spawnPoint,
-      dynamicFields, spawnDelay, learnedSpells, templateChain, lastAnimation,
+      dynamicFields, spawnDelay, canRespawn, learnedSpells, templateChain, lastAnimation,
       setNodeTextureSet, setNodeScale, displayName);
   }
 

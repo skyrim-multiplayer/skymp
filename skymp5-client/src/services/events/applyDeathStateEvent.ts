@@ -1,6 +1,6 @@
-import { Actor } from "skyrimPlatform";
+import { Actor } from 'skyrimPlatform';
 
 export interface ApplyDeathStateEvent {
-    actor: Actor;
-    isDead: boolean;
+  actor: Actor;
+  isDead: boolean;
 }

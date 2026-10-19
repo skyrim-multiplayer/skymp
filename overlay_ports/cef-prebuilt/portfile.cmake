@@ -22,4 +22,15 @@ vcpkg_copy_pdbs()
 
 file(INSTALL "${SOURCE_PATH}/include" DESTINATION "${CURRENT_PACKAGES_DIR}")
 file(INSTALL "${SOURCE_PATH}/Debug" "${SOURCE_PATH}/Release" "${SOURCE_PATH}/Resources" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
+
+# CEF ships Debug and Release directories only, but multi-config Visual Studio
+# builds may resolve imported package assets through RelWithDebInfo/MinSizeRel.
+foreach(config_alias RelWithDebInfo MinSizeRel)
+    file(COPY "${SOURCE_PATH}/Release" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
+    file(RENAME
+        "${CURRENT_PACKAGES_DIR}/share/${PORT}/Release"
+        "${CURRENT_PACKAGES_DIR}/share/${PORT}/${config_alias}"
+    )
+endforeach()
+
 file(INSTALL "${SOURCE_PATH}/LICENSE.txt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

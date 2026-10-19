@@ -64,7 +64,7 @@ float DeathEvent::GetStaminaPercentageBeforeDeath() const noexcept
 
 void DeathEvent::OnFireSuccess(WorldState*)
 {
-  if (actor) {
+  if (actor && actor->GetCanRespawn()) {
     actor->RespawnWithDelay();
   }
 };

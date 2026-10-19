@@ -15,6 +15,9 @@ fi
 
 export VCPKG_DISABLE_METRICS=1
 
+BUILD_GENERATOR="Ninja"
+CMAKE_MAKE_PROGRAM_PATH=""
+
 try_clang() {
   suffix="$1"
   if which clang++$suffix > /dev/null 2>&1; then
@@ -41,7 +44,22 @@ fi
 
 export CMAKE_C_COMPILER="$CC"
 export CMAKE_CXX_COMPILER="$CXX"
-export CMAKE_MAKE_PROGRAM="/usr/bin/ninja"
+
+ninja_path="$(command -v ninja || true)"
+if [ -n "$ninja_path" ]; then
+  BUILD_GENERATOR="Ninja"
+  CMAKE_MAKE_PROGRAM_PATH="$ninja_path"
+elif command -v make >/dev/null 2>&1; then
+  BUILD_GENERATOR="Unix Makefiles"
+  CMAKE_MAKE_PROGRAM_PATH="$(command -v make)"
+  eecho "ninja not found, falling back to Unix Makefiles (${CMAKE_MAKE_PROGRAM_PATH})"
+else
+  eecho "Neither ninja nor make was found in PATH."
+  exit 1
+fi
+
+export CMAKE_MAKE_PROGRAM="$CMAKE_MAKE_PROGRAM_PATH"
+export CMAKE_GENERATOR="$BUILD_GENERATOR"
 
 if [ ! -d build ]; then
   mkdir -v build
@@ -51,7 +69,7 @@ fi
 if [ "$1" = "--configure" ]; then
   shift && \
     cd build && \
-    exec cmake -G "Ninja" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
+    exec cmake -G "$BUILD_GENERATOR" .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$@"
 elif [ "$1" = "--build" ]; then
   shift && \
     cd build && \

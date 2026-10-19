@@ -9,6 +9,13 @@ else()
     string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-port" "7777")
 endif()
 
+# Prefer direct host/port from local config by default.
+# Users can explicitly set "server-info-ignore": false to force master serverinfo resolution.
+string(JSON server_info_ignore_value ERROR_VARIABLE server_info_ignore_error GET "${CLIENT_SETTINGS_JSON}" "server-info-ignore")
+if(server_info_ignore_error)
+    string(JSON CLIENT_SETTINGS_JSON SET "${CLIENT_SETTINGS_JSON}" "server-info-ignore" "true")
+endif()
+
 if(OFFLINE_MODE)
     set(profile_id "")
     string(JSON profile_id ERROR_VARIABLE dummy GET "${CLIENT_SETTINGS_JSON}" "gameData" "profileId")

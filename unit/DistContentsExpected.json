@@ -16,34 +16,22 @@
     ]
   },
   {
-    "configurationTags": [
-      "UI"
-    ],
+    "configurationTags": ["UI"],
     "expectedFiles": [
       "client/Data/Platform/UI/build.js",
       "client/Data/Platform/UI/index.html"
     ]
   },
   {
-    "configurationTags": [
-      "MacOS"
-    ],
-    "expectedFiles": [
-      "server/dist_back/fsevents-X6WP4TKM.node"
-    ]
+    "configurationTags": ["MacOS"],
+    "expectedFiles": ["server/dist_back/fsevents-X6WP4TKM.node"]
   },
   {
-    "configurationTags": [
-      "Unix"
-    ],
-    "expectedFiles": [
-      "papyrus-vm/papyrus-vm"
-    ]
+    "configurationTags": ["Unix"],
+    "expectedFiles": ["papyrus-vm/papyrus-vm"]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "papyrus-vm/papyrus-vm.exe",
       "server/launch_server.bat",
@@ -51,10 +39,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "SkyrimSE",
-      "Win32"
-    ],
+    "configurationTags": ["SkyrimSE", "Win32"],
     "expectedFiles": [
       "client/Data/SKSE/Plugins/version-1-5-16-0.bin",
       "client/Data/SKSE/Plugins/version-1-5-23-0.bin",
@@ -69,10 +54,7 @@
     ]
   },
   {
-    "configurationTags": [
-      "SkyrimAE",
-      "Win32"
-    ],
+    "configurationTags": ["SkyrimAE", "Win32"],
     "expectedFiles": [
       "client/Data/Interface/CombatAlertOverlayMenu.swf",
       "client/Data/Scripts/DLC2SummonDremoraMerchantScript.pex",
@@ -96,18 +78,13 @@
     ]
   },
   {
-    "configurationTags": [
-      "CI",
-      "Win32"
-    ],
+    "configurationTags": ["CI", "Win32"],
     "expectedFiles": [
       "client/Data/Platform/Distribution/build-metadata-public.json"
     ]
   },
   {
-    "configurationTags": [
-      "Win32"
-    ],
+    "configurationTags": ["Win32"],
     "expectedFiles": [
       "client/Data/Platform/Distribution/CEF/chrome_100_percent.pak",
       "client/Data/Platform/Distribution/CEF/chrome_200_percent.pak",

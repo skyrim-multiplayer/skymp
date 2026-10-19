@@ -1,14 +1,6 @@
-import {
-  Actor,
-  Ammo,
-  Game,
-  ObjectReference,
-  Spell,
-  Ui,
-  setInventory,
-} from 'skyrimPlatform';
+import { Actor, Ammo, Game, ObjectReference, Spell, Ui } from 'skyrimPlatform';
 
-import { Entry, Inventory, getInventory } from './inventory';
+import { Entry, Inventory, applyInventory, getInventory } from './inventory';
 
 export const enum SpellType {
   Left,
@@ -63,7 +55,10 @@ const filterWorn = (inv: Inventory): Inventory => {
   return { entries: inv.entries.filter((x) => x.worn || x.wornLeft) };
 };
 
-const removeUnnecessaryExtra = (inv: Inventory, ignoreAmmo: boolean): Inventory => {
+const removeUnnecessaryExtra = (
+  inv: Inventory,
+  ignoreAmmo: boolean,
+): Inventory => {
   return {
     entries: inv.entries.map((x) => {
       const r: Entry = JSON.parse(JSON.stringify(x));
@@ -113,9 +108,12 @@ export const applyEquipment = (ac: Actor, eq: Equipment): boolean => {
 
   ac.removeAllItems(null, false, true);
 
-  const newInventory = removeUnnecessaryExtra(filterWorn(eq.inv), ac.getFormID() === 0x14);
+  const newInventory = removeUnnecessaryExtra(
+    filterWorn(eq.inv),
+    ac.getFormID() === 0x14,
+  );
 
-  setInventory(ac.getFormID(), newInventory);
+  applyInventory(ac, newInventory, false);
 
   syncSpellEquipment(ac, eq.leftSpell, SpellType.Left);
   syncSpellEquipment(ac, eq.rightSpell, SpellType.Right);

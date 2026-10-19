@@ -1,8 +1,6 @@
 # SP 2.5.0 Release Notes
 
-
 This document includes changes made since SP 2.4.0
-
 
 SP updates regularly. This update probably doesn't include ALL patches that have to be made.
 
@@ -17,14 +15,13 @@ To downgrade your Skyrim SE installation use [this patch](https://www.nexusmods.
 This method allows you to close the game by calling `std::exit` under the hood:
 
 ```typescript
-import { once, win32 } from "skyrimPlatform";
+import { once, win32 } from 'skyrimPlatform';
 
-once("activate", () => {
+once('activate', () => {
   // Exit game on any activation
   win32.exitProcess();
 });
 ```
-
 
 ## Add more events
 
@@ -32,7 +29,7 @@ Lots of new events were added to reflect vanilla Papyrus scripting abilities. Fo
 
 ```typescript
 // OnPlayerBowShot TypeScript equivalent
-on("playerBowShot", (event) => {
+on('playerBowShot', (event) => {
   printConsole(event.weapon.getFormID());
   printConsole(event.ammo.getFormID());
   printConsole(event.power);
@@ -91,13 +88,12 @@ Full list of added events:
 - `positionPlayer`
 - `footstep`
 
-
 ## Add Texts API
 
 Add API for creating texts via DirectX overlay.
 
 ```typescript
-skyrimPlatform.createText(600, 600, "Hello Skyrim", [1,1,0,1]);
+skyrimPlatform.createText(600, 600, 'Hello Skyrim', [1, 1, 0, 1]);
 ```
 
 See [texts.md](https://github.com/skyrim-multiplayer/skymp/tree/main/docs/skyrim_platform/texts.md) for documentation.

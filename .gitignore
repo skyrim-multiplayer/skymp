@@ -1,4 +1,5 @@
 build
+logs/
 .clang-tidy
 .linter
 node_modules
@@ -9,3 +10,14 @@ node_modules
 # vim
 .*.swp
 skyrim_data_files/
+
+# Skyrim game data files (Elder Scrolls Master/Plugin files)
+# These are copyrighted game assets and should never be committed to the repository
+*.esm
+*.esp
+*.esl
+
+# Skyrim data directories
+# Server downloads and manages these at runtime
+data/
+world/

@@ -1,3 +1,3 @@
 export interface QueryBlockSetInventoryEvent {
-    block: () => void
+  block: () => void;
 }

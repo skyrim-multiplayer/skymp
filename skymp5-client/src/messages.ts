@@ -33,5 +33,5 @@ export enum MsgType {
   SpSnippet = 30,
   Teleport2 = 31,
   UpdateGamemodeData = 32,
-  CreateActor = 33
+  CreateActor = 33,
 }

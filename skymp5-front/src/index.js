@@ -1,14 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
-import App from './App';
-
-import { store } from './redux/store';
 import { Provider } from 'react-redux';
 
-import { Widgets } from './utils/Widgets';
-
+import App from './App';
+import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
+import './i18n';
 import './main.scss';
+import { store } from './redux/store';
+import { Widgets } from './utils/Widgets';
+import { initPerformanceMonitoring } from './utils/performanceMonitoring';
 
 if (!window.skyrimPlatform) {
   window.skyrimPlatform = {};
@@ -19,23 +19,31 @@ if (!window.skyrimPlatform.widgets) {
   window.skyrimPlatform.widgets = new Widgets([]);
 }
 
+initPerformanceMonitoring();
+
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={store}>
-      <App elem={window.skyrimPlatform.widgets.get()} />
-    </Provider>
+    <AppErrorBoundary>
+      <Provider store={store}>
+        <App elem={window.skyrimPlatform.widgets.get()} />
+      </Provider>
+    </AppErrorBoundary>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
 
 // Called from skymp5-functions-lib, chatProperty.ts
 window.scrollToLastMessage = () => {
-  const _list = document.querySelector('#chat > .chat-main > .list > .chat-list');
-  if (_list != null && window.needToScroll) { _list.scrollTop = _list.offsetHeight * _list.offsetHeight; }
+  const _list = document.querySelector(
+    '#chat > .chat-main > .list > .chat-list',
+  );
+  if (_list != null && window.needToScroll) {
+    _list.scrollTop = _list.offsetHeight * _list.offsetHeight;
+  }
 };
 
 window.playSound = (name) => {
-  (new Audio(require('./sound/' + name).default)).play();
+  new Audio(require('./sound/' + name).default).play();
 };
 
 if (window.skyrimPlatform?.sendMessage) {

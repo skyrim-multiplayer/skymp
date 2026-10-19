@@ -2,15 +2,15 @@ import {
   Actor,
   ActorBase,
   Game,
-  TESModPlatform,
-  Race,
   HeadPart,
+  Race,
+  TESModPlatform,
   TextureSet,
-  printConsole,
+  Utility,
   VoiceType,
   once,
-  Utility,
-} from "skyrimPlatform";
+  printConsole,
+} from 'skyrimPlatform';
 
 export interface Tint {
   texturePath: string;
@@ -88,9 +88,12 @@ export const getAppearance = (actor: Actor): Appearance => {
 
 const isVisible = (argb: number) => argb > 0x00ffffff || argb < 0;
 
-export const applyTints = (actor: Actor | null, appearance: Appearance): void => {
+export const applyTints = (
+  actor: Actor | null,
+  appearance: Appearance,
+): void => {
   if (!appearance) {
-    throw new Error("null appearance has been passed to applyTints");
+    throw new Error('null appearance has been passed to applyTints');
   }
 
   const tints = appearance.tints.filter((t) => isVisible(t.argb));
@@ -98,15 +101,15 @@ export const applyTints = (actor: Actor | null, appearance: Appearance): void =>
   const raceWarPaintRegex = /.*Head.+WarPaint.*/;
   const uniWarPaintRegex = /.*HeadWarPaint.*/;
   const raceSpecificWarPaint = tints.filter(
-    (t) => isVisible(t.argb) && t.texturePath.match(raceWarPaintRegex)
+    (t) => isVisible(t.argb) && t.texturePath.match(raceWarPaintRegex),
   ).length; // MaleHeadNordWarPaint
   const uniWarPaint = tints.filter(
-    (t) => isVisible(t.argb) && t.texturePath.match(uniWarPaintRegex)
+    (t) => isVisible(t.argb) && t.texturePath.match(uniWarPaintRegex),
   ).length; // MaleHeadWarPaint
 
   if (raceSpecificWarPaint + uniWarPaint > 1) {
     // If visible war paints of these two types present, then Skyrim crashes
-    printConsole("bad warpaint!", raceSpecificWarPaint, uniWarPaint);
+    printConsole('bad warpaint!', raceSpecificWarPaint, uniWarPaint);
     return;
   }
 
@@ -115,7 +118,9 @@ export const applyTints = (actor: Actor | null, appearance: Appearance): void =>
     TESModPlatform.pushTintMask(actor, tint.type, tint.argb, tint.texturePath);
   });
 
-  const playerBaseId = ((Game.getPlayer() as Actor).getBaseObject() as ActorBase).getFormID();
+  const playerBaseId = (
+    (Game.getPlayer() as Actor).getBaseObject() as ActorBase
+  ).getFormID();
 
   if (actor)
     TESModPlatform.setFormIdUnsafe(actor.getBaseObject(), playerBaseId);
@@ -123,7 +128,10 @@ export const applyTints = (actor: Actor | null, appearance: Appearance): void =>
 
 export const silentVoiceTypeId = 0x0002f7c3;
 
-const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => {
+const applyAppearanceCommon = (
+  appearance: Appearance,
+  npc: ActorBase,
+): void => {
   const race = Race.from(Game.getFormEx(appearance.raceId));
   const headparts = appearance.headpartIds
     .map((id) => HeadPart.from(Game.getFormEx(id)))
@@ -138,7 +146,9 @@ const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => 
   TESModPlatform.setNpcHairColor(npc, appearance.hairColor);
   TESModPlatform.resizeHeadpartsArray(npc, headparts.length);
   headparts.forEach((v, i) => npc.setNthHeadPart(v, i));
-  npc.setFaceTextureSet(TextureSet.from(Game.getFormEx(appearance.headTextureSetId))); // setFaceTextureSet supports null argument
+  npc.setFaceTextureSet(
+    TextureSet.from(Game.getFormEx(appearance.headTextureSetId)),
+  ); // setFaceTextureSet supports null argument
   npc.setVoiceType(VoiceType.from(Game.getFormEx(silentVoiceTypeId)));
   appearance.options.forEach((v, i) => npc.setFaceMorph(v, i));
   appearance.presets.forEach((v, i) => npc.setFacePreset(v, i));
@@ -146,14 +156,14 @@ const applyAppearanceCommon = (appearance: Appearance, npc: ActorBase): void => 
     npc.setName(appearance.name);
   } else {
     // for undefined or empty name
-    npc.setName(" ");
+    npc.setName(' ');
   }
 };
 
 export const applyAppearance = (appearance: Appearance): ActorBase => {
   const npc: ActorBase = TESModPlatform.createNpc() as ActorBase;
   if (!npc) {
-    throw new Error("createNpc returned null");
+    throw new Error('createNpc returned null');
   }
   applyAppearanceCommon(appearance, npc);
   return npc;
@@ -167,7 +177,7 @@ export const applyAppearanceToPlayer = (appearance: Appearance): void => {
   applyTints(null, appearance);
   (Game.getPlayer() as Actor).queueNiNodeUpdate();
   Utility.wait(0.0625).then(() => {
-    once("update", () => {
+    once('update', () => {
       Game.getPlayer()?.startDeferredKill();
     });
   });

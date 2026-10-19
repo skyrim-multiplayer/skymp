@@ -1,28 +1,33 @@
-import { Form } from "skyrimPlatform";
+import { Form } from 'skyrimPlatform';
 
-import { WorldModel } from './model';
+import { logTrace } from '../logging';
+import {
+  ClientListener,
+  CombinedController,
+  Sp,
+} from '../services/services/clientListener';
+import { RemoteServer } from '../services/services/remoteServer';
+import { SinglePlayerService } from '../services/services/singlePlayerService';
 import { FormViewArray } from './formViewArray';
+import { WorldModel } from './model';
 import { PlayerCharacterDataHolder } from './playerCharacterDataHolder';
-import { ClientListener, CombinedController, Sp } from '../services/services/clientListener';
-import { logTrace } from "../logging";
-import { SinglePlayerService } from "../services/services/singlePlayerService";
-import { RemoteServer } from "../services/services/remoteServer";
 
 export class WorldView extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
 
-    controller.on("update", () => this.onUpdate());
-    controller.once("update", () => this.onceUpdate());
+    controller.on('update', () => this.onUpdate());
+    controller.once('update', () => this.onceUpdate());
 
     this.state = this.makeEmptyState();
 
-    const oldView = this.sp.storage["view"];
+    const oldView = this.sp.storage['view'];
 
     // can't use instanceof here because each hot reload creates a new class
-    this.oldView = typeof oldView === "object" ? oldView as WorldView : undefined;
+    this.oldView =
+      typeof oldView === 'object' ? (oldView as WorldView) : undefined;
 
-    this.sp.storage["view"] = this;
+    this.sp.storage['view'] = this;
   }
 
   getRemoteRefrId(clientsideRefrId: number): number {
@@ -52,7 +57,8 @@ export class WorldView extends ClientListener {
   private onUpdate() {
     this.resetAllFormViewsIfPlayerChangedWorld();
 
-    const singlePlayerService = this.controller.lookupListener(SinglePlayerService);
+    const singlePlayerService =
+      this.controller.lookupListener(SinglePlayerService);
     if (!singlePlayerService.isSinglePlayer) {
       const modelSource = this.controller.lookupListener(RemoteServer);
       this.updateWorld(modelSource.getWorldModel());
@@ -109,8 +115,8 @@ export class WorldView extends ClientListener {
       model = {
         forms: [],
         playerCharacterFormIdx: model.playerCharacterFormIdx,
-        playerCharacterRefrId: model.playerCharacterRefrId
-      }
+        playerCharacterRefrId: model.playerCharacterRefrId,
+      };
     }
 
     const skipUpdates = settings['skymp5-client']['skipUpdates'];
@@ -144,7 +150,7 @@ export class WorldView extends ClientListener {
       allowUpdate: false,
       pcWorldOrCell: 0,
       counter: false,
-    }
+    };
   }
 
   private state: {

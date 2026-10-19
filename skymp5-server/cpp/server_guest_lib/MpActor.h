@@ -30,6 +30,7 @@ public:
 
   const bool& IsRaceMenuOpen() const;
   const bool& IsDead() const;
+  const bool& GetCanRespawn() const;
   const bool& IsRespawning() const;
 
   bool IsSpellLearned(uint32_t spellId) const; // including from base
@@ -61,6 +62,7 @@ public:
   void UpdateNextRestorationTime(std::chrono::seconds duration) noexcept;
 
   void SetRaceMenuOpen(bool isOpen);
+  void SetCanRespawn(bool canRespawn);
   void SetAppearance(const Appearance* newAppearance);
   void SetEquipment(const Equipment& newEquipment);
 

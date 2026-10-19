@@ -1,5 +1,6 @@
 ## Skyrim platform settings
-You can utilize custom settings of the Skyrim platform in your code to retrieve and modify values located at ```"Data/SKSE/Plugins/SkyrimPlatform.ini"```
+
+You can utilize custom settings of the Skyrim platform in your code to retrieve and modify values located at `"Data/SKSE/Plugins/SkyrimPlatform.ini"`
 
 ### Current settings
 
@@ -7,45 +8,48 @@ This section describes INI settings implemented in the current version of Skyrim
 
 #### [Main]
 
-- ```PluginFolders = Data/Platform/Plugins;Data/Platform/PluginsDev``` - List of plugin folders to load plugins from
+- `PluginFolders = Data/Platform/Plugins;Data/Platform/PluginsDev` - List of plugin folders to load plugins from
 
 #### [Debug]
 
-- ```LogLevel = 2``` - This parameter controls the level of Logging 
-    >0 - trace; 1 - debug; 2 - info; 3 - warn; 4 - error; 5 - critical; 6 - none
-- ```Cmd = false``` - This parameter controls whether the console is enabled.
+- `LogLevel = 2` - This parameter controls the level of Logging
+  > 0 - trace; 1 - debug; 2 - info; 3 - warn; 4 - error; 5 - critical; 6 - none
+- `Cmd = false` - This parameter controls whether the console is enabled.
 
-- ```CmdOffsetLeft = 0``` - This parameter controls the console window offset from the left edge of the screen.
+- `CmdOffsetLeft = 0` - This parameter controls the console window offset from the left edge of the screen.
 
-- ```CmdOffsetTop = 720``` - This parameter controls the console window offset from the top edge of the screen.
+- `CmdOffsetTop = 720` - This parameter controls the console window offset from the top edge of the screen.
 
-- ```CmdWidth = 1900``` - This parameter controls the width of the console window.
+- `CmdWidth = 1900` - This parameter controls the width of the console window.
 
-- ```CmdHeight = 317``` - This parameter controls the height of the console window.
-> The default values are for full hd
+- `CmdHeight = 317` - This parameter controls the height of the console window.
+  > The default values are for full hd
 
 #### [Browser]
 
-- ```BackendName = auto``` - Browser backend to use.
-    > ```off``` - disable browser; ```tilted``` - use Tilted UI (legacy); ```nirnlab``` - use NirnLab UI Platform; ```auto``` - automatic selection (currently falls back to tilted)
+- `BackendName = auto` - Browser backend to use.
+  > `off` - disable browser; `tilted` - use Tilted UI (legacy); `nirnlab` - use NirnLab UI Platform; `auto` - automatic selection (currently falls back to tilted)
 
 ### Contributing new settings
 
 This section is for code contributors who is interested in contributing new INI settings.
 
 To create your standart value upon game startup, you need to locate the method Settings::GetPlatformSettings() and use there:
-- ```SetInteger(section, key, value, comment)```
-- ```SetFloat(section, key, value, comment)```
-- ```SetBool(section, key, value, comment)```
-- ```SetString(section, key, value, comment)```
+
+- `SetInteger(section, key, value, comment)`
+- `SetFloat(section, key, value, comment)`
+- `SetBool(section, key, value, comment)`
+- `SetString(section, key, value, comment)`
 
 You can also get values from file fields
-- ```Int GetInteger(section, key, defaultValue)```
-- ```Float GetFloat(section, key, defaultValue)```
-- ```Bool GetBool(section, key, defaultValue)```
-- ```String GetString(section, key, defaultValue)```
+
+- `Int GetInteger(section, key, defaultValue)`
+- `Float GetFloat(section, key, defaultValue)`
+- `Bool GetBool(section, key, defaultValue)`
+- `String GetString(section, key, defaultValue)`
 
 ### Example
+
 ```c++
 auto settings = Settings::GetPlatformSettings();
 

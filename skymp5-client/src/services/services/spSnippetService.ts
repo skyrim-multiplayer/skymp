@@ -1,18 +1,19 @@
-import { MsgType } from "../../messages";
-import { ConnectionMessage } from "../events/connectionMessage";
-import { FinishSpSnippetMessage } from "../messages/finishSpSnippetMessage";
-import { SpSnippetMessage } from "../messages/spSnippetMessage";
-import { ClientListener, CombinedController, Sp } from "./clientListener";
-
+import { logError, logTrace } from '../../logging';
+import { MsgType } from '../../messages';
+import { WorldView } from '../../view/worldView';
 // TODO: refactor worldViewMisc into service
 import { remoteIdToLocalId } from '../../view/worldViewMisc';
-import { logError, logTrace } from "../../logging";
-import { WorldView } from "../../view/worldView";
+import { ConnectionMessage } from '../events/connectionMessage';
+import { FinishSpSnippetMessage } from '../messages/finishSpSnippetMessage';
+import { SpSnippetMessage } from '../messages/spSnippetMessage';
+import { ClientListener, CombinedController, Sp } from './clientListener';
 
 export class SpSnippetService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
-    this.controller.emitter.on("spSnippetMessage", (e) => this.onSpSnippetMessage(e));
+    this.controller.emitter.on('spSnippetMessage', (e) =>
+      this.onSpSnippetMessage(e),
+    );
     this.spAny = sp as Record<string, any>;
   }
 
@@ -31,31 +32,38 @@ export class SpSnippetService extends ClientListener {
             res = null;
           }
 
-          if (res !== null
-            && typeof res !== "number"
-            && typeof res !== "string"
-            && typeof res !== "boolean") {
-            logError(this, `Unsupported SpSnippet result type '${typeof res}'`)
+          if (
+            res !== null &&
+            typeof res !== 'number' &&
+            typeof res !== 'string' &&
+            typeof res !== 'boolean'
+          ) {
+            logError(this, `Unsupported SpSnippet result type '${typeof res}'`);
             return;
           }
 
-          const message: FinishSpSnippetMessage = res === null ? {
-            t: MsgType.FinishSpSnippet,
-            snippetIdx: msg.snippetIdx
-          }
-            : {
-              t: MsgType.FinishSpSnippet,
-              returnValue: res,
-              snippetIdx: msg.snippetIdx,
-            }
+          const message: FinishSpSnippetMessage =
+            res === null
+              ? {
+                  t: MsgType.FinishSpSnippet,
+                  snippetIdx: msg.snippetIdx,
+                }
+              : {
+                  t: MsgType.FinishSpSnippet,
+                  returnValue: res,
+                  snippetIdx: msg.snippetIdx,
+                };
 
-          this.controller.emitter.emit("sendMessage", {
+          this.controller.emitter.emit('sendMessage', {
             message: message,
-            reliability: "reliable"
+            reliability: 'reliable',
           });
         })
         .catch((e) => {
-          logError(this, 'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e);
+          logError(
+            this,
+            'SpSnippet ' + msg.class + ' ' + msg.function + ' failed ' + e,
+          );
         });
     });
   }
@@ -65,12 +73,14 @@ export class SpSnippetService extends ClientListener {
     const classLowerCase = snippet.class.toLowerCase();
 
     // keep in sync with remoteServer.ts
-    if (classLowerCase === "objectreference") {
-      if (functionLowerCase === "setdisplayname") {
+    if (classLowerCase === 'objectreference') {
+      if (functionLowerCase === 'setdisplayname') {
         let newName = snippet.arguments[0];
-        if (typeof newName === "string") {
+        if (typeof newName === 'string') {
           const selfId = remoteIdToLocalId(snippet.selfId);
-          const self = this.sp.ObjectReference.from(this.sp.Game.getFormEx(selfId));
+          const self = this.sp.ObjectReference.from(
+            this.sp.Game.getFormEx(selfId),
+          );
 
           const replaceValue = self?.getBaseObject()?.getName();
 
@@ -78,21 +88,32 @@ export class SpSnippetService extends ClientListener {
             newName = newName.replace(/%original_name%/g, replaceValue);
             snippet.arguments[0] = newName;
           } else {
-            logError(this, "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was", snippet.selfId.toString(16));
+            logError(
+              this,
+              "Couldn't get a replaceValue for SetDisplayName, snippet.selfId was",
+              snippet.selfId.toString(16),
+            );
           }
         } else {
-          logError(this, "Encountered SetDisplayName with non-string argument", newName);
+          logError(
+            this,
+            'Encountered SetDisplayName with non-string argument',
+            newName,
+          );
         }
       }
     }
 
-    if (classLowerCase === "game") {
-      if (functionLowerCase === "showracemenu" || functionLowerCase === "showlimitedracemenu") {
-        logTrace(this, "showracemenu called");
+    if (classLowerCase === 'game') {
+      if (
+        functionLowerCase === 'showracemenu' ||
+        functionLowerCase === 'showlimitedracemenu'
+      ) {
+        logTrace(this, 'showracemenu called');
         const worldView = this.controller.lookupListener(WorldView);
         worldView.setFormViewUpdateAllowed(false);
 
-        logTrace(this, "Waiting 1.0s before calling showracemenu");
+        logTrace(this, 'Waiting 1.0s before calling showracemenu');
         this.sp.Utility.wait(1.0).then(() => {
           this.runStatic(snippet);
           worldView.waitGameTimeAndAllowFormViewUpdate(1.0);
@@ -101,15 +122,24 @@ export class SpSnippetService extends ClientListener {
       }
     }
 
-    if (classLowerCase === "skymphacks") {
-      if (functionLowerCase === "additem" || functionLowerCase === "removeitem") {
-        const form = this.sp.Form.from(this.deserializeArg(snippet.arguments[0]));
+    if (classLowerCase === 'skymphacks') {
+      if (
+        functionLowerCase === 'additem' ||
+        functionLowerCase === 'removeitem'
+      ) {
+        const form = this.sp.Form.from(
+          this.deserializeArg(snippet.arguments[0]),
+        );
         if (form === null) {
-          logError(this, "Unable to find form with id " + snippet.arguments[0].formId.toString(16));
+          logError(
+            this,
+            'Unable to find form with id ' +
+              snippet.arguments[0].formId.toString(16),
+          );
           return;
         }
 
-        const sign = snippet.function === "AddItem" ? "+" : "-";
+        const sign = snippet.function === 'AddItem' ? '+' : '-';
         const count = snippet.arguments[1];
 
         let soundId = 0x334ab;
@@ -120,34 +150,40 @@ export class SpSnippetService extends ClientListener {
         const sound = this.sp.Sound.from(this.sp.Game.getFormEx(soundId));
         if (sound !== null) {
           const name = form.getName();
-          if (name.trim() === "") {
-            logTrace(this, "Sound will not be played because item has no name")
+          if (name.trim() === '') {
+            logTrace(this, 'Sound will not be played because item has no name');
           } else {
             sound.play(this.sp.Game.getPlayer());
           }
         } else {
-          logError(this, "Unable to find sound with id " + soundId.toString(16));
+          logError(
+            this,
+            'Unable to find sound with id ' + soundId.toString(16),
+          );
         }
 
         if (count <= 0) {
-          logError(this, "Positive count expected, got " + count.toString());
+          logError(this, 'Positive count expected, got ' + count.toString());
         } else {
           const name = form.getName();
-          if (name.trim() === "") {
-            logTrace(this, "Notification will not be shown because item has no name")
+          if (name.trim() === '') {
+            logTrace(
+              this,
+              'Notification will not be shown because item has no name',
+            );
           } else {
-            this.sp.Debug.notification(sign + " " + name + " (" + count + ")");
+            this.sp.Debug.notification(sign + ' ' + name + ' (' + count + ')');
           }
-          logTrace(this, sign + " " + name + " (" + count + ")");
+          logTrace(this, sign + ' ' + name + ' (' + count + ')');
         }
-      } else throw new Error("Unknown SkympHack - " + snippet.function);
+      } else throw new Error('Unknown SkympHack - ' + snippet.function);
       return;
     }
     return snippet.selfId ? this.runMethod(snippet) : this.runStatic(snippet);
-  };
+  }
 
   private deserializeArg(arg: any) {
-    if (typeof arg === "object") {
+    if (typeof arg === 'object') {
       const formId = remoteIdToLocalId(arg.formId);
       const form = this.sp.Game.getFormEx(formId);
       let cl = this.spAny[arg.type];
@@ -166,15 +202,13 @@ export class SpSnippetService extends ClientListener {
       return gameObject;
     }
     return arg;
-  };
+  }
 
   private async runMethod(snippet: SpSnippetMessage): Promise<unknown> {
     const selfId = remoteIdToLocalId(snippet.selfId);
     const self = this.sp.Game.getFormEx(selfId);
     if (!self)
-      throw new Error(
-        `Unable to find form with id ${selfId.toString(16)}`,
-      );
+      throw new Error(`Unable to find form with id ${selfId.toString(16)}`);
     let cl = this.spAny[snippet.class];
     if (!cl) {
       const matchingKey = Object.keys(this.spAny).find((key) => {
@@ -191,21 +225,23 @@ export class SpSnippetService extends ClientListener {
     const selfCasted = cl.from(self);
     if (!selfCasted)
       throw new Error(
-        `Form ${selfId.toString(16)} is not instance of ${snippet.class}, form type is ${self.getType()}`,
+        `Form ${selfId.toString(16)} is not instance of ${
+          snippet.class
+        }, form type is ${self.getType()}`,
       );
     const f = selfCasted[snippet.function];
     return await f.apply(
       selfCasted,
       snippet.arguments.map((arg) => this.deserializeArg(arg)),
     );
-  };
+  }
 
   private async runStatic(snippet: SpSnippetMessage): Promise<unknown> {
     const papyrusClass = this.spAny[snippet.class];
     return await papyrusClass[snippet.function](
       ...snippet.arguments.map((arg) => this.deserializeArg(arg)),
     );
-  };
+  }
 
   private spAny: Record<string, any>;
-};
+}

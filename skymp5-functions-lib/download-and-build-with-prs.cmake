@@ -1,4 +1,4 @@
-include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/package_manager.cmake)
 
 message(STATUS "Downloading gamemode sources")
 

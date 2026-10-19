@@ -1,20 +1,19 @@
-import { ObjectReference } from "@skyrim-platform/skyrim-platform";
-import { FormViewArray } from "src/view/formViewArray";
-import { FormModel } from "src/view/model";
-
-import * as skyrimPlatform from "skyrimPlatform";
+import * as skyrimPlatform from 'skyrimPlatform';
+import { ObjectReference } from '@skyrim-platform/skyrim-platform';
+import { FormViewArray } from 'src/view/formViewArray';
+import { FormModel } from 'src/view/model';
 
 export interface GamemodeApiCtx {
-    refr: ObjectReference | undefined;
-    value: unknown;
-    _model: FormModel | undefined;
-    sp: typeof skyrimPlatform,
-    state: Record<string, unknown> | undefined;
-    _view: FormViewArray | undefined;
-    i: number;
-    getFormIdInServerFormat: (clientsideFormId: number) => number;
-    getMyFormIdInServerFormat: () => number;
-    getFormIdInClientFormat: (serversideFormId: number) => number;
-    get: (propName: string) => unknown;
-    respawn: () => void;
+  refr: ObjectReference | undefined;
+  value: unknown;
+  _model: FormModel | undefined;
+  sp: typeof skyrimPlatform;
+  state: Record<string, unknown> | undefined;
+  _view: FormViewArray | undefined;
+  i: number;
+  getFormIdInServerFormat: (clientsideFormId: number) => number;
+  getMyFormIdInServerFormat: () => number;
+  getFormIdInClientFormat: (serversideFormId: number) => number;
+  get: (propName: string) => unknown;
+  respawn: () => void;
 }

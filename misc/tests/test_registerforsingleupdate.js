@@ -1,4 +1,4 @@
-const assert = require("node:assert");
+const assert = require('node:assert');
 
 const main = async () => {
   const actorId = mp.createActor(0, [1, 1, 1], 0, 0x3c);
@@ -6,14 +6,38 @@ const main = async () => {
 
   const timeWas = Date.now();
 
-  mp.callPapyrusFunction("method", "Form", "RegisterForSingleUpdate", actorObject, [0]);
-  mp.callPapyrusFunction("method", "Form", "RegisterForSingleUpdate", actorObject, [0.1]);
-  mp.callPapyrusFunction("method", "Form", "RegisterForSingleUpdate", actorObject, [0.2]);
-  mp.callPapyrusFunction("method", "Form", "RegisterForSingleUpdate", actorObject, [0.5]);
+  mp.callPapyrusFunction(
+    'method',
+    'Form',
+    'RegisterForSingleUpdate',
+    actorObject,
+    [0],
+  );
+  mp.callPapyrusFunction(
+    'method',
+    'Form',
+    'RegisterForSingleUpdate',
+    actorObject,
+    [0.1],
+  );
+  mp.callPapyrusFunction(
+    'method',
+    'Form',
+    'RegisterForSingleUpdate',
+    actorObject,
+    [0.2],
+  );
+  mp.callPapyrusFunction(
+    'method',
+    'Form',
+    'RegisterForSingleUpdate',
+    actorObject,
+    [0.5],
+  );
 
   let receivedEvents = [];
 
-  mp["onPapyrusEvent:OnUpdate"] = () => {
+  mp['onPapyrusEvent:OnUpdate'] = () => {
     receivedEvents.push(Date.now() - timeWas);
   };
 
@@ -24,11 +48,13 @@ const main = async () => {
   assert(receivedEvents[0] >= 500 && receivedEvents[0] <= 1000);
 };
 
-main().then(() => {
-  console.log("Test passed!");
-  process.exit(0);
-}).catch((err) => {
-  console.log("Test failed!")
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    console.log('Test passed!');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.log('Test failed!');
+    console.error(err);
+    process.exit(1);
+  });

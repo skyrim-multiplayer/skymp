@@ -1,66 +1,69 @@
-import {
-  Game,
-  Utility,
-  once
-} from "skyrimPlatform";
-import { SkympClient } from "./services/services/skympClient";
+import * as sp from 'skyrimPlatform';
+import { Game, Utility, once } from 'skyrimPlatform';
 
-import * as sp from "skyrimPlatform";
-
+import { ActivationService } from './services/services/activationService';
+import { AnimDebugService } from './services/services/animDebugService';
+import { AuthService } from './services/services/authService';
 import { BlockPapyrusEventsService } from './services/services/blockPapyrusEventsService';
+import { BlockedAnimationsService } from './services/services/blockedAnimationsService';
+import { BrowserService } from './services/services/browserService';
+import { ClientRuntimeTelemetryService } from './services/services/clientRuntimeTelemetryService';
+import { ConsoleCommandsService } from './services/services/consoleCommandsService';
+import { ContainersService } from './services/services/containersService';
+import { CraftService } from './services/services/craftService';
+import { DeathService } from './services/services/deathService';
+import { DisableDifficultySelectionService } from './services/services/disableDifficultySelectionService';
+import { DisableFastTravelService } from './services/services/disableFastTravelService';
+import { DisableSkillAdvanceService } from './services/services/disableSkillAdvanceService';
+import { DropItemService } from './services/services/dropItemService';
 import { EnforceLimitationsService } from './services/services/enforceLimitationsService';
+import { FrontHotReloadService } from './services/services/frontHotReloadService';
+import { GamemodeEventSourceService } from './services/services/gamemodeEventSourceService';
+import { GamemodeUpdateService } from './services/services/gamemodeUpdateService';
+import { HitService } from './services/services/hitService';
+import { KeyboardEventsService } from './services/services/keyboardEventsService';
+import { LastInvService } from './services/services/lastInvService';
 import { LoadGameService } from './services/services/loadGameService';
+import { LoadOrderVerificationService } from './services/services/loadOrderVerificationService';
+import { MagicSyncService } from './services/services/magicSyncService';
+import { EffectsLearningService } from './services/services/effectsLearningService';
+import { EnchantmentsService } from './services/services/enchantmentsService';
+import { FavoritesService } from './services/services/favoritesService';
+import { MarkerService } from './services/services/markerService';
+import { MovementDebugTelemetryService } from './services/services/movementDebugTelemetryService';
+import { WeatherService } from './services/services/weatherService';
+import { NetInfoService } from './services/services/netInfoService';
+import { NetworkingService } from './services/services/networkingService';
+import { PlayerBowShotService } from './services/services/playerBowShotService';
+import { ProfilingService } from './services/services/profilingService';
+import { RagdollService } from './services/services/ragdollService';
+import { RemoteServer } from './services/services/remoteServer';
 import { SendInputsService } from './services/services/sendInputsService';
+import { ServerJsVerificationService } from './services/services/serverJsVerificationService';
+import { SettingsService } from './services/services/settingsService';
 import { SinglePlayerService } from './services/services/singlePlayerService';
+import { SkympClient } from './services/services/skympClient';
+import { SpSnippetService } from './services/services/spSnippetService';
+import { SpVersionCheckService } from './services/services/spVersionCheckService';
+import { SweetCameraEnforcementService } from './services/services/sweetCameraEnforcementService';
+import { SweetTaffyDynamicPerksService } from './services/services/sweetTaffyDynamicPerksService';
+import { SweetTaffyEvalService } from './services/services/sweetTaffyEvalService';
+import { SweetTaffyNicknamesService } from './services/services/sweetTaffyNicknamesService';
+import { SweetTaffyPlayerCombatService } from './services/services/sweetTaffyPlayerCombatService';
+import { SweetTaffySkillMenuService } from './services/services/sweetTaffySkillMenuService';
+import { SweetTaffyStaticPerksService } from './services/services/sweetTaffyStaticPerksService';
+import { SweetTaffySweetCantDropService } from './services/services/sweetTaffySweetCantDropService';
+import { TimeService } from './services/services/timeService';
+import { TimersService } from './services/services/timersService';
+import { VoiceActivitySyncService } from './services/services/voiceActivitySyncService';
+import { WorldCleanerService } from './services/services/worldCleanerService';
 import { SpApiInteractor } from './services/spApiInteractor';
-import { TimeService } from "./services/services/timeService";
-import { SpVersionCheckService } from "./services/services/spVersionCheckService";
-import { ConsoleCommandsService } from "./services/services/consoleCommandsService";
-import { LastInvService } from "./services/services/lastInvService";
-import { ActivationService } from "./services/services/activationService";
-import { CraftService } from "./services/services/craftService";
-import { DropItemService } from "./services/services/dropItemService";
-import { HitService } from "./services/services/hitService";
-import { RagdollService } from "./services/services/ragdollService";
-import { DeathService } from "./services/services/deathService";
-import { ContainersService } from "./services/services/containersService";
-import { NetworkingService } from "./services/services/networkingService";
-import { RemoteServer } from "./services/services/remoteServer";
-import { SpSnippetService } from "./services/services/spSnippetService";
-import { SweetTaffyDynamicPerksService } from "./services/services/sweetTaffyDynamicPerksService";
-import { SweetTaffySweetCantDropService } from "./services/services/sweetTaffySweetCantDropService";
-import { SweetTaffyStaticPerksService } from "./services/services/sweetTaffyStaticPerksService";
-import { DisableSkillAdvanceService } from "./services/services/disableSkillAdvanceService";
-import { DisableFastTravelService } from "./services/services/disableFastTravelService";
-import { DisableDifficultySelectionService } from "./services/services/disableDifficultySelectionService";
-import { SweetTaffyPlayerCombatService } from "./services/services/sweetTaffyPlayerCombatService";
-import { WorldCleanerService } from "./services/services/worldCleanerService";
-import { SweetTaffySkillMenuService } from "./services/services/sweetTaffySkillMenuService";
-import { LoadOrderVerificationService } from "./services/services/loadOrderVerificationService";
-import { BrowserService } from "./services/services/browserService";
-import { AuthService } from "./services/services/authService";
-import { NetInfoService } from "./services/services/netInfoService";
-import { AnimDebugService } from "./services/services/animDebugService";
-import { TimersService } from "./services/services/timersService";
-import { PlayerBowShotService } from "./services/services/playerBowShotService";
-import { GamemodeEventSourceService } from "./services/services/gamemodeEventSourceService";
-import { GamemodeUpdateService } from "./services/services/gamemodeUpdateService";
-import { FrontHotReloadService } from "./services/services/frontHotReloadService";
-import { BlockedAnimationsService } from "./services/services/blockedAnimationsService";
-import { WorldView } from "./view/worldView";
-import { KeyboardEventsService } from "./services/services/keyboardEventsService";
-import { MagicSyncService } from "./services/services/magicSyncService";
-import { ProfilingService } from "./services/services/profilingService";
-import { SettingsService } from "./services/services/settingsService";
-import { SweetCameraEnforcementService } from "./services/services/sweetCameraEnforcementService";
-import { SweetTaffyNicknamesService } from "./services/services/sweetTaffyNicknamesService";
-import { ServerJsVerificationService } from "./services/services/serverJsVerificationService";
-import { SweetTaffyEvalService } from "./services/services/sweetTaffyEvalService";
+import { WorldView } from './view/worldView';
 
-once("update", () => {
-  Utility.setINIBool("bAlwaysActive:General", true);
-  Game.setGameSettingInt("iDeathDropWeaponChance", 0);
-  Utility.setINIFloat("fAutoVanityModeDelay:Camera", 3600);
+once('update', () => {
+  Utility.setINIBool('bAlwaysActive:General', true);
+  Game.setGameSettingInt('iDeathDropWeaponChance', 0);
+  Utility.setINIFloat('fAutoVanityModeDelay:Camera', 3600);
 });
 
 const main = () => {
@@ -86,6 +89,7 @@ const main = () => {
       new DeathService(sp, controller),
       new ContainersService(sp, controller),
       new NetworkingService(sp, controller),
+      new ClientRuntimeTelemetryService(sp, controller),
       new RemoteServer(sp, controller),
       new SpSnippetService(sp, controller),
       new SettingsService(sp, controller),
@@ -104,6 +108,7 @@ const main = () => {
       new BrowserService(sp, controller),
       new AuthService(sp, controller),
       new NetInfoService(sp, controller),
+      new MovementDebugTelemetryService(sp, controller),
       new AnimDebugService(sp, controller),
       new TimersService(sp, controller),
       new PlayerBowShotService(sp, controller),
@@ -116,7 +121,13 @@ const main = () => {
       new MagicSyncService(sp, controller),
       new ProfilingService(sp, controller),
       new SweetTaffyNicknamesService(sp, controller),
-      new ServerJsVerificationService(sp, controller)
+      new ServerJsVerificationService(sp, controller),
+      new MarkerService(sp, controller),
+      new WeatherService(sp, controller),
+      new EffectsLearningService(sp, controller),
+      new EnchantmentsService(sp, controller),
+      new FavoritesService(sp, controller),
+      new VoiceActivitySyncService(sp, controller),
     ];
     SpApiInteractor.setup(listeners);
   } catch (e) {
@@ -129,4 +140,4 @@ const main = () => {
 // I saw "attempt to call hooks.add while in hook context" error
 // I'm not sure if it's a C++ bug in SkyrimPlatform or an artifact of webpack+hotreload
 // But let's for now ensure that "main" executes inside tick context
-once("tick", main);
+once('tick', main);

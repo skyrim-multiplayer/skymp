@@ -18,9 +18,11 @@ jobs:
     steps:
       - name: Trigger gamemode deploy job
         env:
+          INSTALLER_REPOSITORY: ${{ vars.INSTALLER_REPOSITORY }}
           GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
         run: |
-          gh workflow run server-build-deploy-1-5.yml --repo skyrim-multiplayer/skymp5-installer-v2 \
+          : "${INSTALLER_REPOSITORY:?Set the INSTALLER_REPOSITORY repository variable (owner/repo)}"
+          gh workflow run server-build-deploy-1-5.yml --repo "$INSTALLER_REPOSITORY" \
             -f action='deploy_gamemode' \
             -f server_name='${{ inputs.branch }}' \
             -f real_triggering_actor='${{ github.triggering_actor }}' \

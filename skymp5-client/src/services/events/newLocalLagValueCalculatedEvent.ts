@@ -1,3 +1,3 @@
 export interface NewLocalLagValueCalculatedEvent {
-    lagUnitsNoZ: number
+  lagUnitsNoZ: number;
 }

@@ -22,9 +22,22 @@ if(MSVC)
   find_path(CEF_INCLUDE_DIR include/cef_app.h)
   find_path(CEF_SHARE share/cef-prebuilt)
   set(CEF_SHARE "${CEF_SHARE}/share/cef-prebuilt")
+  find_library(CEF_LIBCEF_DEBUG NAMES libcef PATHS "${CEF_SHARE}/Debug" NO_DEFAULT_PATH)
+  find_library(CEF_LIBCEF_RELEASE NAMES libcef PATHS "${CEF_SHARE}/Release" "${CEF_SHARE}/RelWithDebInfo" "${CEF_SHARE}/MinSizeRel" NO_DEFAULT_PATH)
+  find_library(CEF_SANDBOX_DEBUG NAMES cef_sandbox PATHS "${CEF_SHARE}/Debug" NO_DEFAULT_PATH)
+  find_library(CEF_SANDBOX_RELEASE NAMES cef_sandbox PATHS "${CEF_SHARE}/Release" "${CEF_SHARE}/RelWithDebInfo" "${CEF_SHARE}/MinSizeRel" NO_DEFAULT_PATH)
   target_link_libraries(cef INTERFACE "$<IF:$<CONFIG:Debug>,${CEF_LIBRARY_DEBUG},${CEF_LIBRARY_RELEASE}>")
-  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/cef_sandbox.lib")
-  target_link_libraries(cef INTERFACE "${CEF_SHARE}/$<CONFIG>/libcef.lib")
+  if(CEF_LIBCEF_DEBUG AND CEF_LIBCEF_RELEASE)
+    target_link_libraries(cef INTERFACE "$<IF:$<CONFIG:Debug>,${CEF_LIBCEF_DEBUG},${CEF_LIBCEF_RELEASE}>")
+  else()
+    message(FATAL_ERROR "Unable to locate libcef import libraries under ${CEF_SHARE}")
+  endif()
+
+  if(CEF_SANDBOX_DEBUG AND CEF_SANDBOX_RELEASE)
+    target_link_libraries(cef INTERFACE "$<IF:$<CONFIG:Debug>,${CEF_SANDBOX_DEBUG},${CEF_SANDBOX_RELEASE}>")
+  else()
+    message(WARNING "cef_sandbox.lib not found under ${CEF_SHARE}; continuing without sandbox library")
+  endif()
   target_include_directories(cef INTERFACE ${CEF_INCLUDE_DIR})
 
   set(third_party "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
@@ -78,7 +91,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
   )
   apply_default_settings(TARGETS skyrim_plugin_resources)
 
-  include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/package_manager.cmake)
   yarn_execute_command(
     WORKING_DIRECTORY "${SKYRIM_PLATFORM_SOURCE_DIR}/tools/dev_service"
     COMMAND install
@@ -95,7 +108,7 @@ if(NOT "${SKIP_SKYRIM_PLATFORM_BUILDING}")
     target_include_directories(skyrim_platform PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include)
     target_link_libraries(skyrim_platform PRIVATE papyrus-vm-lib savefile skyrim_plugin_resources ui cef platform_lib viet serialization)
     target_link_libraries(skyrim_platform PRIVATE node-embedder-api)
-    
+
     find_path(FRIDA_GUM_INCLUDE_DIR NAMES frida-gum.h)
     find_library(FRIDA_GUM_LIBRARY NAMES frida-gum.lib)
 

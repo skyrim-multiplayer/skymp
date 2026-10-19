@@ -1,0 +1,372 @@
+
+name: running_server_files
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: CMake build type
+        required: false
+        default: RelWithDebInfo
+        type: choice
+        options:
+          - RelWithDebInfo
+          - Release
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  determine-version:
+    name: Determine version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_release: ${{ steps.version.outputs.should_release }}
+      changelog: ${{ steps.version.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: version
+        run: |
+          latest_tag=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+          range_spec="HEAD"
+          if [ -n "$latest_tag" ]; then
+            range_spec="${latest_tag}..HEAD"
+          fi
+
+          commit_count=$(git rev-list --count "$range_spec")
+          if [ "$commit_count" -eq 0 ]; then
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "changelog<<EOF"
+              echo "No commits found for release range."
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            echo "No commits in range, skipping release."
+            exit 0
+          fi
+
+          major_entries=""
+          feat_entries=""
+          patch_entries=""
+          other_entries=""
+
+          while IFS='|' read -r subject sha; do
+            [ -z "$subject" ] && continue
+            full_message=$(git show -s --format=%B "$sha")
+            entry="- ${subject} (${sha})"
+
+            if echo "$full_message" | grep -Eiq 'BREAKING CHANGE|^[a-z]+(\([^)]+\))?!:|^(major|breaking)(\([^)]+\))?:'; then
+              major_entries="${major_entries}${entry}\n"
+            elif echo "$subject" | grep -Eiq '^feat(\([^)]+\))?:'; then
+              feat_entries="${feat_entries}${entry}\n"
+            elif echo "$subject" | grep -Eiq '^(fix|perf|refactor)(\([^)]+\))?:'; then
+              patch_entries="${patch_entries}${entry}\n"
+            else
+              other_entries="${other_entries}${entry}\n"
+            fi
+          done < <(git log --format='%s|%h' "$range_spec")
+
+          should_release="false"
+
+          if [ -z "$latest_tag" ]; then
+            base_major=0
+            base_minor=0
+            base_patch=0
+          else
+            base_major=$(echo "$latest_tag" | sed 's/v\([0-9]*\)\..*/\1/')
+            base_minor=$(echo "$latest_tag" | sed 's/v[0-9]*\.\([0-9]*\)\..*/\1/')
+            base_patch=$(echo "$latest_tag" | sed 's/v[0-9]*\.[0-9]*\.\([0-9]*\)/\1/')
+          fi
+
+          if [ -n "$major_entries" ]; then
+            bump="major"
+            should_release="true"
+          elif [ -n "$feat_entries" ]; then
+            bump="minor"
+            should_release="true"
+          elif [ -n "$patch_entries" ]; then
+            bump="patch"
+            should_release="true"
+          else
+            bump="none"
+          fi
+
+          if [ "$should_release" = "true" ]; then
+            if [ -z "$latest_tag" ]; then
+              new_version="v1.0.0"
+            elif [ "$bump" = "major" ]; then
+              base_major=$((base_major + 1))
+              base_minor=0
+              base_patch=0
+              new_version="v${base_major}.${base_minor}.${base_patch}"
+            elif [ "$bump" = "minor" ]; then
+              base_minor=$((base_minor + 1))
+              base_patch=0
+              new_version="v${base_major}.${base_minor}.${base_patch}"
+            else
+              base_patch=$((base_patch + 1))
+              new_version="v${base_major}.${base_minor}.${base_patch}"
+            fi
+          else
+            new_version=""
+          fi
+
+          since_label="project start"
+          if [ -n "$latest_tag" ]; then
+            since_label="$latest_tag"
+          fi
+
+          changelog_file=$(mktemp)
+          {
+            echo "## Changes since ${since_label}"
+            echo
+            if [ -n "$major_entries" ]; then
+              echo "### Major"
+              printf "%b" "$major_entries"
+              echo
+            fi
+            if [ -n "$feat_entries" ]; then
+              echo "### Features"
+              printf "%b" "$feat_entries"
+              echo
+            fi
+            if [ -n "$patch_entries" ]; then
+              echo "### Fixes and Improvements"
+              printf "%b" "$patch_entries"
+              echo
+            fi
+            if [ -n "$other_entries" ]; then
+              echo "### Other Changes"
+              printf "%b" "$other_entries"
+              echo
+            fi
+          } > "$changelog_file"
+
+          echo "version=$new_version" >> "$GITHUB_OUTPUT"
+          echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
+          {
+            echo "changelog<<EOF"
+            cat "$changelog_file"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Bump type: $bump"
+          echo "Should release: $should_release"
+          if [ "$should_release" = "true" ]; then
+            echo "Next version: $new_version"
+          else
+            echo "No release trigger detected (accepted: fix/feat/major/breaking/!)."
+          fi
+
+  windows-server-files:
+    name: Windows server files
+    needs: determine-version
+    if: needs.determine-version.outputs.should_release == 'true'
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      packages: write
+    env:
+      BUILD_TYPE: ${{ github.event.inputs.build_type || 'RelWithDebInfo' }}
+      VCPKG_BINARY_SOURCES: ${{ github.repository_owner == 'skyrim-multiplayer' && 'clear;nuget,GitHub,readwrite' || 'clear;nuget,GitHub,read' }}
+      VCPKG_FEATURE_FLAGS: manifests
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: true
+
+      - uses: ./.github/actions/pr_base
+        with:
+          DESCRIPTION: running_server_files-windows
+          SKYRIM_VR_FLAG: OFF
+          RUN_TESTS: false
+          BUILD_UNIT_TESTS: false
+          BUILD_FRONTEND_PRECHECK: false
+          SP_NEXUS_ARTIFACT_NAME: nope
+          OFFLINE_MODE: OFF
+          DEPLOY_BRANCH: ""
+          DIST_ARTIFACT_NAME: running_server_files_windows_dist
+          SERVER_DIST_ARTIFACT_NAME: running_server_files_windows_server_dist
+          RELEASE_VERSION: ${{ needs.determine-version.outputs.version }}
+          UPLOAD_SERVER_DIST: false
+          SKYMP5_PATCHES_PAT: ${{ github.token }}
+          NUGET_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove ESM files before packing
+        shell: powershell
+        run: |
+          Get-ChildItem -Path "${{ github.workspace }}\build\dist\server" -Recurse -Include "*.esm" -Force | Remove-Item -Force
+          Write-Host "Removed all *.esm files from server dist"
+
+      - name: Pack Windows client files
+        shell: powershell
+        run: |
+          Compress-Archive -Path "${{ github.workspace }}\build\dist\client\*" -DestinationPath "${{ github.workspace }}\build\running_server_files_windows_client_dist.zip" -Force
+
+      - name: Upload Windows client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: running_server_files_windows_client_dist
+          path: ${{ github.workspace }}/build/running_server_files_windows_client_dist.zip
+
+      - name: Upload cleaned Windows server artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: running_server_files_windows_server_dist
+          path: ${{ github.workspace }}/build/dist/server
+
+  linux-server-files:
+    name: Linux server files
+    needs: determine-version
+    if: needs.determine-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    env:
+      BUILD_TYPE: ${{ github.event.inputs.build_type || 'RelWithDebInfo' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Resolve base build image
+        run: |
+          cat ${{ github.workspace }}/misc/github_env_linux >> "$GITHUB_ENV"
+
+      - name: Setup Node.js with npm cache
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ${{ github.workspace }}/skymp5-front/package-lock.json
+
+      - name: Prepare workspace owner
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" \
+            "$SKYMP_VCPKG_DEPS_IMAGE" \
+            chown -R skymp:skymp /src
+
+      - name: Build frontend
+        run: |
+          cd ${{ github.workspace }}/skymp5-front
+          npm ci
+          npm run build
+
+      - name: Configure CMake
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
+            -u skymp \
+            -e CI=true \
+            "$SKYMP_VCPKG_DEPS_IMAGE" \
+              ./build.sh --configure \
+                -DBUILD_UNIT_TESTS=OFF \
+                -DBUILD_GAMEMODE=OFF \
+                -DOFFLINE_MODE=OFF \
+                -DDOWNLOAD_SKYRIM_DATA=ON \
+                -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build server target
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" -w "/src" \
+            -u skymp \
+            -e CI=true \
+            "$SKYMP_VCPKG_DEPS_IMAGE" \
+              ./build.sh --build --target skymp5-server
+
+      - name: Write server release metadata
+        run: |
+          cat > "${{ github.workspace }}/build/dist/server/release-info.json" <<EOF
+          {
+            "version": "${{ needs.determine-version.outputs.version }}",
+            "commitSha": "${{ github.sha }}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "source": "github-actions"
+          }
+          EOF
+
+      - name: Remove ESM files before packing
+        run: |
+          cd "${{ github.workspace }}/build/dist/server"
+          find . -name '*.esm' -type f -delete
+          echo "Removed all *.esm files from server dist"
+
+      - name: Pack server files
+        run: |
+          cd "${{ github.workspace }}/build"
+          tar czf running_server_files_linux_server_dist.tar.gz dist/server
+
+      - name: Upload Linux server artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: running_server_files_linux_server_dist
+          path: ${{ github.workspace }}/build/running_server_files_linux_server_dist.tar.gz
+
+      - name: Upload vcpkg logs (Linux)
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: running_server_files_linux_vcpkg_logs
+          path: |
+            ${{github.workspace}}/build/vcpkg-bootstrap.log
+            ${{github.workspace}}/vcpkg/buildtrees/**/*.log
+
+  release-server-files:
+    name: Release server files
+    needs: [determine-version, windows-server-files, linux-server-files]
+    if: needs.determine-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows client artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: running_server_files_windows_client_dist
+          path: ./artifacts/windows_client_files
+
+      - name: Prepare Windows client zip for release
+        run: |
+          cp ./artifacts/windows_client_files/running_server_files_windows_client_dist.zip ./artifacts/running_server_files_windows_client_dist.zip
+
+      - name: Download Windows server artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: running_server_files_windows_server_dist
+          path: ./artifacts/windows_server_files
+
+      - name: Pack Windows server artifact
+        run: |
+          cd ./artifacts/windows_server_files
+          zip -r ../running_server_files_windows_server_dist.zip .
+
+      - name: Download Linux server artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: running_server_files_linux_server_dist
+          path: ./artifacts
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.determine-version.outputs.version }}
+          name: ${{ needs.determine-version.outputs.version }}
+          body: ${{ needs.determine-version.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            ./artifacts/running_server_files_windows_client_dist.zip
+            ./artifacts/running_server_files_windows_server_dist.zip
+            ./artifacts/running_server_files_linux_server_dist.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

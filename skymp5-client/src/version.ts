@@ -1,8 +1,16 @@
-import { Utility, Debug, getPlatformVersion, on, Game, Ui } from 'skyrimPlatform';
+import {
+  Debug,
+  Game,
+  Ui,
+  Utility,
+  getPlatformVersion,
+  on,
+} from 'skyrimPlatform';
 
 export const requiredVersion = '2.9.0';
 
-const realVersion = typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
+const realVersion =
+  typeof getPlatformVersion === 'function' ? getPlatformVersion() : 'unknown';
 
 // TODO: no one actually calls this function. make a service
 export const verifyVersion = (): void => {

@@ -1,6 +1,6 @@
-import { MsgType } from "../../messages";
+import { MsgType } from '../../messages';
 
 export interface HostStopMessage {
-    t: MsgType.HostStop;
-    target: number;
+  t: MsgType.HostStop;
+  target: number;
 }

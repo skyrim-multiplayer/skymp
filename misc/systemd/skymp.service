@@ -1,0 +1,20 @@
+[Unit]
+Description=SkyMP dedicated server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=skymp
+Group=skymp
+WorkingDirectory=/opt/skymp
+ExecStart=/opt/skymp/build/dist/server/launch_server.sh
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+# Optional: raise file limits if needed for busy servers
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -3,6 +3,7 @@
   "compilerOptions": {
     "target": "es5",
     "module": "es2015",
+    "ignoreDeprecations": "6.0",
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
@@ -10,9 +11,13 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "types": ["node"],
     "baseUrl": ".",
     "lib": ["esnext"],
-    "paths": { "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"] },
+    "paths": {
+      "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"]
+    },
+    "rootDir": "src",
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"]

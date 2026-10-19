@@ -1,7 +1,7 @@
-import React from "react";
-import { connect } from "react-redux";
+import React from 'react';
+import { connect } from 'react-redux';
 
-import "./styles.scss";
+import './styles.scss';
 
 class AnimList extends React.Component {
   constructor(props) {
@@ -9,11 +9,11 @@ class AnimList extends React.Component {
   }
 
   componentDidMount() {
-    document.addEventListener("keydown", this.onKeyDown.bind(this));
+    document.addEventListener('keydown', this.onKeyDown.bind(this));
   }
 
   componentWillUnmount() {
-    document.removeEventListener("keydown", this.onKeyDown.bind(this));
+    document.removeEventListener('keydown', this.onKeyDown.bind(this));
   }
 
   onKeyDown(e) {
@@ -28,7 +28,7 @@ class AnimList extends React.Component {
         key={`anim-${index}`}
         onClick={() => {
           this.props.updateShow({ show: false });
-          window.mp.send("cef::chat:send", `/anim ${index}`);
+          window.mp.send('cef::chat:send', `/anim ${index}`);
         }}
       >
         {anim.name}
@@ -52,7 +52,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => ({
   updateShow: (data) =>
     dispatch({
-      type: "UPDATE_ANIMLIST_SHOW",
+      type: 'UPDATE_ANIMLIST_SHOW',
       data,
     }),
 });

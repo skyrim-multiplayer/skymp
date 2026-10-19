@@ -3,11 +3,11 @@ project(skymp5-client)
 file(GLOB_RECURSE sources ${CMAKE_CURRENT_LIST_DIR}/src/*)
 
 if(BUILD_CLIENT)
-  include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+  include(${CMAKE_SOURCE_DIR}/cmake/package_manager.cmake)
 
-  yarn_execute_command(
+  npm_execute_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    COMMAND install
+    COMMAND ci
   )
 
   set(out
@@ -15,7 +15,7 @@ if(BUILD_CLIENT)
   )
   add_custom_command(
     OUTPUT ${out}
-    COMMAND yarn --cwd "\"${CMAKE_CURRENT_LIST_DIR}\"" build
+    COMMAND npm --prefix ${CMAKE_CURRENT_LIST_DIR} run build
     DEPENDS ${sources}
   )
   add_custom_target(skymp5-client ALL

@@ -1,4 +1,4 @@
 export interface NicknameCreateEvent {
-    remoteRefrId: number;
-    textId: number;
+  remoteRefrId: number;
+  textId: number;
 }

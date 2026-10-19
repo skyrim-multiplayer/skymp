@@ -4,33 +4,32 @@ There are methods such as `printConsole ()` that can be called immediately after
 
 ## Table of contents
 
-  - [browser](#browser)
-  - [on/once](#ononce)
-  - [printConsole](#printconsole)
-  - [settings](#settings)
-  - [writeLogs](#writelogs)
-  - [Other methods and properties](#other-methods-and-properties)
-
+- [browser](#browser)
+- [on/once](#ononce)
+- [printConsole](#printconsole)
+- [settings](#settings)
+- [writeLogs](#writelogs)
+- [Other methods and properties](#other-methods-and-properties)
 
 ## printConsole
 
-  `printConsole (... arguments: unknown[]): void`
+`printConsole (... arguments: unknown[]): void`
 
 Output to the game console, opened by the `~` key.
 
 All console messages will get the string `[Script]` appended.
 
-  ```typescript
-  import { printConsole, Game, once } from "skyrimPlatform";
+```typescript
+import { Game, once, printConsole } from 'skyrimPlatform';
 
-  once("update", () => {
-    printConsole(`player id = ${Game.getPlayer().getFormID()}`);
-  });
-  ```
+once('update', () => {
+  printConsole(`player id = ${Game.getPlayer().getFormID()}`);
+});
+```
 
 ## writeLogs
 
-  `writeLogs(pluginName: string, ...arguments: unknown[]): void`
+`writeLogs(pluginName: string, ...arguments: unknown[]): void`
 
 Write to a log file.\
 This function will create a file named `Data/Platform/Plugins/pluginName-logs.txt`.
@@ -41,13 +40,13 @@ This gives you great freedom on what info you can include in your log and how yo
 For example, you can use `Date().toLocaleString()` if you want to put a timestamp in the locale of the computer the game is currently running in:
 
 ```typescript
-import { writeLogs } from "skyrimPlatform";
+import { writeLogs } from 'skyrimPlatform';
 
 const t = new Date().toLocaleString();
-writeLogs("your-mod", `${t}: some message`);
+writeLogs('your-mod', `${t}: some message`);
 ```
 
-***WARNING***: This file will be overwritten each time the game is closed.\
+**_WARNING_**: This file will be overwritten each time the game is closed.\
 If you want to have many logs, you will need to explicitly handle log names.
 
 ## settings
@@ -57,9 +56,9 @@ If you want to have many logs, you will need to explicitly handle log names.
 An object that provides access to plugin settings:
 
 ```typescript
-import { settings, printConsole } from "skyrimPlatform";
+import { printConsole, settings } from 'skyrimPlatform';
 
-let option = settings["plugin-name"]["my-option"];
+let option = settings['plugin-name']['my-option'];
 printConsole(option);
 ```
 
@@ -69,9 +68,10 @@ File format JSON, extension `.txt` for the convenience of users.
 Changing a settings file contents will fire [hot reloading][Features].
 
 ## on/once
-  `on (eventName: string, callback: any): void`
 
-  `once (eventName: string, callback: any): void`
+`on (eventName: string, callback: any): void`
+
+`once (eventName: string, callback: any): void`
 
 [Subscribe][NewEvents] to an event named `eventName`.
 

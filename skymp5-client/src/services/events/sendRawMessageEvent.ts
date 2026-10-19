@@ -1,4 +1,4 @@
 export interface SendRawMessageEvent {
-    rawMessage: ArrayBuffer;
-    reliability: 'unreliable' | 'reliable';
+  rawMessage: ArrayBuffer;
+  reliability: 'unreliable' | 'reliable';
 }

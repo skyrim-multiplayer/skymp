@@ -1,20 +1,26 @@
-import { Game, ObjectReference, storage } from "skyrimPlatform";
-import { WorldView } from "./worldView";
+import { Game, ObjectReference, storage } from 'skyrimPlatform';
+
+import { RemoteServer } from '../services/services/remoteServer';
 import { SpApiInteractor } from '../services/spApiInteractor';
-import { RemoteServer } from "../services/services/remoteServer";
+import { WorldView } from './worldView';
 
 export const getViewFromStorage = (): WorldView | undefined => {
-  const res = storage["view"] as WorldView;
+  const res = storage['view'] as WorldView;
   // can't use instanceof here because each hot reload creates a new class
-  if (typeof res === "object") {
+  if (typeof res === 'object') {
     return res;
   }
   return undefined;
 };
 
-export const localIdToRemoteId = (localFormId: number, newCast: boolean = false): number => {
+export const localIdToRemoteId = (
+  localFormId: number,
+  newCast: boolean = false,
+): number => {
   if (newCast && localFormId == 0x14) {
-    return SpApiInteractor.getControllerInstance().lookupListener(RemoteServer).getMyRemoteRefrId();
+    return SpApiInteractor.getControllerInstance()
+      .lookupListener(RemoteServer)
+      .getMyRemoteRefrId();
   }
 
   if (localFormId >= 0xff000000) {

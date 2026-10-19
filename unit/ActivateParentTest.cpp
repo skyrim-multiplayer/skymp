@@ -13,6 +13,7 @@ TEST_CASE(
   PartOne& p = GetPartOne();
 
   p.worldState.npcSettings["Skyrim.esm"].spawnInInterior = true;
+  p.worldState.npcSettings["Skyrim.esm"].overriden = true;
   p.worldState.npcEnabled = true;
 
   auto& trapWallWood = p.worldState.GetFormAt<MpObjectReference>(0x54b15);
@@ -59,6 +60,7 @@ TEST_CASE("trapwallwood (54b15) in BleakFalls should be activatable by "
   p.AddListener(listener);
 
   p.worldState.npcSettings["Skyrim.esm"].spawnInInterior = true;
+  p.worldState.npcSettings["Skyrim.esm"].overriden = true;
   p.worldState.npcEnabled = true;
 
   auto& trapWallWood = p.worldState.GetFormAt<MpObjectReference>(0x54b15);

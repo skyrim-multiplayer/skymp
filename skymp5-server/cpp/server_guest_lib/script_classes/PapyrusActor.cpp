@@ -21,7 +21,51 @@ espm::ActorValue ConvertToAV(CIString actorValueName)
   if (!actorValueName.compare("magicka")) {
     return espm::ActorValue::Magicka;
   }
+  if (!actorValueName.compare("healrate")) {
+    return espm::ActorValue::HealRate;
+  }
+  if (!actorValueName.compare("magickarate")) {
+    return espm::ActorValue::MagickaRate;
+  }
+  if (!actorValueName.compare("staminarate")) {
+    return espm::ActorValue::StaminaRate;
+  }
+  if (!actorValueName.compare("healratemult") ||
+      !actorValueName.compare("combathealthregenmultmod")) {
+    return espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod;
+  }
+  if (!actorValueName.compare("magickaratemult") ||
+      !actorValueName.compare("combathealthregenmultpowermod")) {
+    return espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod;
+  }
+  if (!actorValueName.compare("staminaratemult")) {
+    return espm::ActorValue::StaminaRateMult;
+  }
   return espm::ActorValue::None;
+}
+
+bool IsPercentageActorValue(const espm::ActorValue av)
+{
+  return av == espm::ActorValue::Health || av == espm::ActorValue::Magicka ||
+    av == espm::ActorValue::Stamina;
+}
+
+bool IsServerSettableActorValue(const espm::ActorValue av)
+{
+  switch (av) {
+    case espm::ActorValue::Health:
+    case espm::ActorValue::Magicka:
+    case espm::ActorValue::Stamina:
+    case espm::ActorValue::HealRate:
+    case espm::ActorValue::MagickaRate:
+    case espm::ActorValue::StaminaRate:
+    case espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod:
+    case espm::ActorValue::MagickaRateMult_or_CombatHealthRegenMultPowerMod:
+    case espm::ActorValue::StaminaRateMult:
+      return true;
+    default:
+      return false;
+  }
 }
 }
 
@@ -75,6 +119,12 @@ VarValue PapyrusActor::RestoreActorValue(
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
+  if (!IsPercentageActorValue(attributeName)) {
+    spdlog::warn("RestoreActorValue - unsupported actor value '{}'",
+                 static_cast<const char*>(arguments[0]));
+    return VarValue();
+  }
+
   float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
     actor->RestoreActorValue(attributeName, modifier);
@@ -85,13 +135,20 @@ VarValue PapyrusActor::RestoreActorValue(
 VarValue PapyrusActor::SetActorValue(VarValue self,
                                      const std::vector<VarValue>& arguments)
 {
-  if (auto actor = GetFormPtr<MpActor>(self)) {
+  espm::ActorValue attributeName =
+    ConvertToAV(static_cast<const char*>(arguments[0]));
+  float newValue = static_cast<double>(arguments[1]);
 
-    // TODO: fix that at least for important AVs like attributes
-    // SpSnippet impl helps scripted draugrs attack, nothing more (Aggression
-    // var)
-    spdlog::warn("SetActorValue executes locally at this moment. Results will "
-                 "not affect server calculations");
+  if (auto actor = GetFormPtr<MpActor>(self)) {
+    if (IsServerSettableActorValue(attributeName)) {
+      actor->SetActorValue(attributeName, newValue);
+      return VarValue();
+    }
+
+    // Fallback for AVs that are still not server-authoritative.
+    spdlog::warn("SetActorValue fallback to local execution for unsupported "
+                 "actor value '{}'",
+                 static_cast<const char*>(arguments[0]));
 
     auto it = actor->GetParent()->hosters.find(actor->GetFormId());
 
@@ -114,6 +171,12 @@ VarValue PapyrusActor::DamageActorValue(VarValue self,
 {
   espm::ActorValue attributeName =
     ConvertToAV(static_cast<const char*>(arguments[0]));
+  if (!IsPercentageActorValue(attributeName)) {
+    spdlog::warn("DamageActorValue - unsupported actor value '{}'",
+                 static_cast<const char*>(arguments[0]));
+    return VarValue();
+  }
+
   float modifier = static_cast<double>(arguments[1]);
   if (auto actor = GetFormPtr<MpActor>(self)) {
     actor->DamageActorValue(attributeName, modifier);
@@ -185,6 +248,20 @@ VarValue PapyrusActor::GetActorValuePercentage(
       return VarValue(form.actorValues.staminaPercentage);
     } else if (attrID == espm::ActorValue::Magicka) {
       return VarValue(form.actorValues.magickaPercentage);
+    } else if (attrID == espm::ActorValue::HealRate) {
+      return VarValue(form.actorValues.healRate);
+    } else if (attrID == espm::ActorValue::MagickaRate) {
+      return VarValue(form.actorValues.magickaRate);
+    } else if (attrID == espm::ActorValue::StaminaRate) {
+      return VarValue(form.actorValues.staminaRate);
+    } else if (attrID ==
+               espm::ActorValue::HealRateMult_or_CombatHealthRegenMultMod) {
+      return VarValue(form.actorValues.healRateMult);
+    } else if (attrID == espm::ActorValue::
+                           MagickaRateMult_or_CombatHealthRegenMultPowerMod) {
+      return VarValue(form.actorValues.magickaRateMult);
+    } else if (attrID == espm::ActorValue::StaminaRateMult) {
+      return VarValue(form.actorValues.staminaRateMult);
     } else {
       return VarValue(0.0f);
     }

@@ -1,1 +1,1 @@
-export interface BrowserWindowLoadedEvent { }
+export interface BrowserWindowLoadedEvent {}

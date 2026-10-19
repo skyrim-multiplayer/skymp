@@ -1,9 +1,9 @@
 (api, sp) => {
-  const nodeProcess = require("node:process");
+  const nodeProcess = require('node:process');
 
   const compatibilityConfig = {
-    staticRenames: { "getplayer": ["getPlayer", "GetPlayer"] },
-    uppercaseAliases: ["Spell", "Weapon"],
+    staticRenames: { getplayer: ['getPlayer', 'GetPlayer'] },
+    uppercaseAliases: ['Spell', 'Weapon'],
   };
 
   function getAliasNameImpl(originalName, envName, character) {
@@ -11,9 +11,11 @@
       return null;
     }
 
-    const aliases = nodeProcess.env[envName].split(",");
+    const aliases = nodeProcess.env[envName].split(',');
 
-    const indexInAliases = aliases.findIndex(alias => alias.toLowerCase() === originalName.toLowerCase());
+    const indexInAliases = aliases.findIndex(
+      (alias) => alias.toLowerCase() === originalName.toLowerCase(),
+    );
 
     if (indexInAliases === -1) {
       return null;
@@ -23,11 +25,11 @@
   }
 
   function getFunctionAliasName(functionName) {
-    return getAliasNameImpl(functionName, "SP3_FUNCTION_ALIASES", "y");
+    return getAliasNameImpl(functionName, 'SP3_FUNCTION_ALIASES', 'y');
   }
 
   function getClassAliasName(className) {
-    return getAliasNameImpl(className, "SP3_CLASS_ALIASES", "x");
+    return getAliasNameImpl(className, 'SP3_CLASS_ALIASES', 'x');
   }
 
   function prettifyImpl(name, func) {
@@ -42,17 +44,17 @@
     }
 
     return firstChar + name;
-  };
+  }
 
   // Replicates the behavior of the prettify function from TSConverter
   // Except it makes the first character lowercase by default
   function prettify(name) {
-    return prettifyImpl(name, ch => ch.toLowerCase());
-  };
+    return prettifyImpl(name, (ch) => ch.toLowerCase());
+  }
 
   function prettifyUpperCase(name) {
-    return prettifyImpl(name, ch => ch.toUpperCase());
-  };
+    return prettifyImpl(name, (ch) => ch.toUpperCase());
+  }
 
   function sortClassesByInheritance(classes, api) {
     const sorted = [];
@@ -73,7 +75,9 @@
 
         if (base && !visited.has(base)) {
           if (recursionStack.has(base)) {
-            throw new Error(`Circular dependency detected: ${current} -> ${base}`);
+            throw new Error(
+              `Circular dependency detected: ${current} -> ${base}`,
+            );
           }
           stack.push(base);
           recursionStack.add(base);
@@ -96,12 +100,13 @@
   // In previous version, they were completely native objects, without javascript properties
   const assign = (targetObject, sourceObject) => {
     if (sourceObject._skyrimPlatform_indexInPool !== undefined) {
-      targetObject._skyrimPlatform_indexInPool = sourceObject._skyrimPlatform_indexInPool;
+      targetObject._skyrimPlatform_indexInPool =
+        sourceObject._skyrimPlatform_indexInPool;
     } else if (sourceObject.desc !== undefined) {
       targetObject.desc = sourceObject.desc;
       targetObject.type = sourceObject.type;
     }
-  }
+  };
 
   function createSkyrimPlatform(api, sp) {
     if (!sp) {
@@ -110,7 +115,7 @@
 
     // Helper: Wraps a raw object with its class prototype
     const wrapObject = (obj) => {
-      if (obj === null || typeof obj !== "object") {
+      if (obj === null || typeof obj !== 'object') {
         return obj;
       }
       const ctor = sp[obj._sp3ObjectType];
@@ -124,43 +129,47 @@
       return {
         [name]: function (...args) {
           // For instance methods, bind 'this'. For static, call directly.
-          const resWithoutClass = isStatic ? impl(...args) : impl.bind(this)(...args);
+          const resWithoutClass = isStatic
+            ? impl(...args)
+            : impl.bind(this)(...args);
 
           if (resWithoutClass instanceof Promise) {
             // Preserve metadata potentially attached to the Promise object itself
             let tmp = resWithoutClass._sp3ObjectType;
 
             return new Promise((resolve, reject) => {
-              resWithoutClass.then((res) => {
-                if (res !== null && typeof res === "object" && tmp) {
-                  res._sp3ObjectType = tmp;
-                }
-                resolve(wrapObject(res));
-              }).catch(reject);
+              resWithoutClass
+                .then((res) => {
+                  if (res !== null && typeof res === 'object' && tmp) {
+                    res._sp3ObjectType = tmp;
+                  }
+                  resolve(wrapObject(res));
+                })
+                .catch(reject);
             });
           }
 
           return wrapObject(resWithoutClass);
-        }
+        },
       }[name];
     };
 
     api._sp3RegisterWrapObjectFunction(wrapObject);
 
-    const classes =
-      sortClassesByInheritance(api._sp3ListClasses(), api)
-        .map(className => prettifyUpperCase(className));
+    const classes = sortClassesByInheritance(api._sp3ListClasses(), api).map(
+      (className) => prettifyUpperCase(className),
+    );
 
-    classes.forEach(className => {
+    classes.forEach((className) => {
       const baseClassName = prettifyUpperCase(api._sp3GetBaseClass(className));
       let staticFunctions = api._sp3ListStaticFunctions(className);
       const methods = api._sp3ListMethods(className);
 
       const staticOverrides = new Set();
-      staticFunctions = staticFunctions.filter(f => {
+      staticFunctions = staticFunctions.filter((f) => {
         const replacement = compatibilityConfig.staticRenames[f.toLowerCase()];
         if (replacement) {
-          replacement.forEach(r => staticOverrides.add(r));
+          replacement.forEach((r) => staticOverrides.add(r));
           return false;
         }
         return true;
@@ -169,18 +178,20 @@
       // The "Computed Property Name" trick is used to create a named function dynamically
       const f = {
         [className]: function () {
-          throw new Error(`Direct construction of ${className} is not allowed. Use .from() or static methods.`);
-        }
+          throw new Error(
+            `Direct construction of ${className} is not allowed. Use .from() or static methods.`,
+          );
+        },
       }[className];
 
-      if (baseClassName !== "") {
+      if (baseClassName !== '') {
         f.prototype = Object.create(sp[baseClassName].prototype);
       }
 
       f.prototype.constructor = f;
 
       // Register Instance Methods
-      methods.concat(methods.map(prettify)).forEach(method => {
+      methods.concat(methods.map(prettify)).forEach((method) => {
         const impl = api._sp3GetFunctionImplementation(sp, className, method);
         const methodFinal = createWrapperFunction(impl, false, method);
 
@@ -192,28 +203,37 @@
       staticFunctions
         .concat(staticFunctions.map(prettify))
         .concat(Array.from(staticOverrides))
-        .forEach(staticFunction => {
-          const impl = api._sp3GetFunctionImplementation(sp, className, staticFunction);
-          const staticFunctionFinal = createWrapperFunction(impl, true, staticFunction);
+        .forEach((staticFunction) => {
+          const impl = api._sp3GetFunctionImplementation(
+            sp,
+            className,
+            staticFunction,
+          );
+          const staticFunctionFinal = createWrapperFunction(
+            impl,
+            true,
+            staticFunction,
+          );
 
           f[staticFunction] = staticFunctionFinal;
-          f[getFunctionAliasName(staticFunction) || staticFunction] = staticFunctionFinal;
+          f[getFunctionAliasName(staticFunction) || staticFunction] =
+            staticFunctionFinal;
         });
 
-      f["from"] = function (obj) {
+      f['from'] = function (obj) {
         if (api._sp3DynamicCast(obj, className)) {
           const resWithClass = Object.create(f.prototype);
           assign(resWithClass, obj);
           return resWithClass;
         }
         return null;
-      }
+      };
 
       sp[className] = f;
       sp[getClassAliasName(className) || className] = f;
     });
 
-    compatibilityConfig.uppercaseAliases.forEach(alias => {
+    compatibilityConfig.uppercaseAliases.forEach((alias) => {
       if (sp[alias]) {
         sp[alias.toUpperCase()] = sp[alias];
       }

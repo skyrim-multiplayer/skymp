@@ -10,7 +10,7 @@ set(AUTO_MERGE_REPO_URL "https://github.com/${AUTO_MERGE_REPO}.git")
 set(PSEUDO_BINARY_DIR "./build")
 
 
-include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/package_manager.cmake)
 
 message(STATUS "Downloading ${AUTO_MERGE_REPO}@${AUTO_MERGE_BRANCH} (dist/index.js)")
 

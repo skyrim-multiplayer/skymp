@@ -1,4 +1,4 @@
 export interface NicknameDestroyEvent {
-    remoteRefrId: number;
-    textId: number;
+  remoteRefrId: number;
+  textId: number;
 }

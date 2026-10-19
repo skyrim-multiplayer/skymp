@@ -1,9 +1,11 @@
 #include "PropertyBindingFactory.h"
 
 #include "ActorNeighborsBinding.h"
+#include "ActorValuesBinding.h"
 #include "AngleBinding.h"
 #include "AppearanceBinding.h"
 #include "BaseDescBinding.h"
+#include "CanRespawnBinding.h"
 #include "ConsoleCommandsAllowedBinding.h"
 #include "CustomPropertyBinding.h"
 #include "EquipmentBinding.h"
@@ -32,9 +34,11 @@ PropertyBindingFactory::CreateStandardPropertyBindings()
 {
   std::map<std::string, std::shared_ptr<PropertyBinding>> result;
   result["actorNeighbors"] = std::make_shared<ActorNeighborsBinding>();
+  result["actorValues"] = std::make_shared<ActorValuesBinding>();
   result["angle"] = std::make_shared<AngleBinding>();
   result["appearance"] = std::make_shared<AppearanceBinding>();
   result["baseDesc"] = std::make_shared<BaseDescBinding>();
+  result["canRespawn"] = std::make_shared<CanRespawnBinding>();
   result["equipment"] = std::make_shared<EquipmentBinding>();
   result["inventory"] = std::make_shared<InventoryBinding>();
   result["isDead"] = std::make_shared<IsDeadBinding>();

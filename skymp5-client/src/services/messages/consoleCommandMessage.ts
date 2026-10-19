@@ -1,11 +1,11 @@
-import { MsgType } from "../../messages";
+import { MsgType } from '../../messages';
 
 export interface ConsoleCommandMessage {
-    t: MsgType.ConsoleCommand,
-    data: ConsoleCommandMessageData
+  t: MsgType.ConsoleCommand;
+  data: ConsoleCommandMessageData;
 }
 
 interface ConsoleCommandMessageData {
-    commandName: string;
-    args: Array<number | string>;
+  commandName: string;
+  args: Array<number | string>;
 }

@@ -1,3 +1,3 @@
 export interface RefrIdMessageBase {
-    _refrId: number | undefined;
+  _refrId: number | undefined;
 }

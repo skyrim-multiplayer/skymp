@@ -1,47 +1,88 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 name: PR Base
+description: 'Reusable composite action for PR and deploy builds (Windows)'
 inputs:
   DESCRIPTION:
-    description: "Will be used for artifact names"
+    description: 'Will be used for artifact names'
     required: true
   SKYRIM_VR_FLAG:
-    description: "Set to ON if building for Skyrim VR"
+    description: 'Set to ON if building for Skyrim VR'
     required: false
     default: OFF
   SP_NEXUS_ARTIFACT_NAME:
-    description: "May be nope. Artifact name for Skyrim Platform Nexus artifact, %SP_VERSION% will be replaced with the version number"
+    description: 'May be nope. Artifact name for Skyrim Platform Nexus artifact, %SP_VERSION% will be replaced with the version number'
     required: false
-    default: "nope"
+    default: 'nope'
   DEPLOY_BRANCH:
-    description: "May be empty. Branch here refers to indev/sweetpie"
+    description: 'May be empty. Branch here refers to indev/sweetpie'
     required: false
-    default: ""
+    default: ''
   DIST_ARTIFACT_NAME:
-    description: "Artifact name for the dist folder"
+    description: 'Artifact name for the dist folder'
     required: true
   SERVER_DIST_ARTIFACT_NAME:
-    description: "Artifact name for the server dist folder"
+    description: 'Artifact name for the server dist folder'
     required: true
   SKYMP5_PATCHES_PAT:
-    description: "PAT for skymp5-patches repository"
+    description: 'PAT for skymp5-patches repository'
     required: true
   SKYMP5_FRONT_PAT:
-    description: "PAT for skymp5-front repository"
+    description: 'PAT for skymp5-front repository'
     required: false
   BUILD_SKYMP5_FRONT:
-    description: "Set to true if building skymp5-front"
+    description: 'Set to true if building skymp5-front'
     required: false
-    default: "false"
+    default: 'false'
   NUGET_GITHUB_TOKEN:
-    description: "A GitHub token for GitHub Packages (Nuget)"
+    description: 'A GitHub token for GitHub Packages (Nuget)'
     required: false
-    default: ""
+    default: ''
+  OFFLINE_MODE:
+    description: 'Set generated server/client settings offline mode'
+    required: false
+    default: 'ON'
   EMSCRIPTEN:
-    description: "Set to true if building for Emscripten"
+    description: 'Set to true if building for Emscripten'
     required: false
-    default: "false"
+    default: 'false'
+  RUN_TESTS:
+    description: 'Set to false to skip ctest execution in packaging-only workflows'
+    required: false
+    default: 'true'
+  BUILD_UNIT_TESTS:
+    description: 'Set to false to skip building unit-test targets during CMake configure/build'
+    required: false
+    default: 'true'
+  BUILD_FRONTEND_PRECHECK:
+    description: 'Set to false to skip early skymp5-front npm build precheck'
+    required: false
+    default: 'true'
+  RELEASE_VERSION:
+    description: 'Optional release version string written into dist/server/release-info.json'
+    required: false
+    default: ''
+  UPLOAD_SERVER_DIST:
+    description: 'Set to false when the caller wants to post-process build/dist/server before uploading it'
+    required: false
+    default: 'true'
 runs:
   using: composite
-  steps:  
+  steps:
+    - name: Get Git SHA Before Gather
+      id: repo_sha
+      shell: powershell
+      run: |
+        $sha = git rev-parse HEAD
+        echo "sha=$sha" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Setup Node.js with npm cache
+      uses: actions/setup-node@v5
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: |
+          ${{ github.workspace }}/skymp5-front/package-lock.json
+
     - name: Gather PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
       uses: Pospelove/auto-merge-action@main
@@ -62,13 +103,6 @@ runs:
               "token": "${{inputs.SKYMP5_PATCHES_PAT}}"
             }
           ]
-    
-    - name: Get Git SHA Before Gather
-      id: repo_sha
-      shell: powershell
-      run: |
-        $sha = git rev-parse HEAD
-        echo "sha=$sha" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Commit gathered PRs
       if: ${{ inputs.DEPLOY_BRANCH != '' }}
@@ -77,19 +111,35 @@ runs:
         git config --global user.email "skyrim_multiplayer_bot@users.noreply.github.com"
         git config --global user.name "Skyrim Multiplayer Bot"
         git add .
-        git commit -m "Merge PRs ${{inputs.DEPLOY_BRANCH}}"
+        if (git diff --staged --quiet) {
+          Write-Host "No changes to commit after gathering PRs."
+        } else {
+          git commit -m "Merge PRs ${{inputs.DEPLOY_BRANCH}}"
+        }
       shell: powershell
 
     - name: Early build skymp5-client
+      if: ${{ inputs.RUN_TESTS == 'true' }}
       run: |
         cd ${{github.workspace}}/skymp5-client
         yarn
         yarn build
       shell: powershell
 
+    - name: Early build skymp5-front
+      if: ${{ inputs.EMSCRIPTEN != 'true' && inputs.BUILD_FRONTEND_PRECHECK == 'true' }}
+      run: |
+        cd ${{github.workspace}}/skymp5-front
+        npm ci
+        npm run build
+        if (-not (Test-Path "${{github.workspace}}/skymp5-front/dist/build.js")) {
+          throw "skymp5-front/dist/build.js was not produced by the frontend build"
+        }
+      shell: powershell
+
     - name: Check and install OpenCppCoverage using github-script
-      if: runner.os == 'Windows'
-      uses: actions/github-script@v6
+      if: ${{ runner.os == 'Windows' && inputs.RUN_TESTS == 'true' }}
+      uses: actions/github-script@v9
       with:
         script: |
           const { execSync } = require('child_process');
@@ -117,7 +167,7 @@ runs:
 
     - name: Move vcpkg submodule to a larger drive using github-script
       if: runner.os == 'Windows'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         script: |
           const fs = require('fs');
@@ -191,11 +241,22 @@ runs:
       run: Get-PSDrive
       shell: powershell
 
-    - uses: actions/github-script@v6
+    - uses: actions/github-script@v9
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - name: Enforce read-only NuGet cache on forks
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        if ("${{ github.repository_owner }}" -ne "skyrim-multiplayer" -and $env:VCPKG_BINARY_SOURCES -like '*readwrite*') {
+          $adjusted = $env:VCPKG_BINARY_SOURCES -replace 'readwrite', 'read'
+          "VCPKG_BINARY_SOURCES=$adjusted" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          $env:VCPKG_BINARY_SOURCES = $adjusted
+          Write-Host "Fork repository detected. Using read-only vcpkg binary cache mode: $adjusted"
+        }
 
     - name: Setup NuGet Credentials (PowerShell)
       if: runner.os == 'Windows'
@@ -206,7 +267,17 @@ runs:
           exit 0
         }
 
+        if ([string]::IsNullOrWhiteSpace("${{ inputs.NUGET_GITHUB_TOKEN }}")) {
+          throw "NUGET_GITHUB_TOKEN is empty. Set it from a repository/org secret so NuGet binary cache auth can work."
+        }
+
         $nugetPath = & 'C:\vcpkg\vcpkg.exe' fetch nuget | Select-Object -Last 1
+
+        # Ensure package push has an API key configured for GitHub Packages.
+        & $nugetPath setapikey "${{ inputs.NUGET_GITHUB_TOKEN }}" -Source "https://nuget.pkg.github.com/skyrim-multiplayer/index.json"
+
+        # Reset source to avoid stale credentials from previous runner state.
+        & $nugetPath sources remove -name "GitHub" | Out-Null
 
         if ("${{ github.event_name }}" -eq "pull_request") {
           Write-Host "Pull request detected. Adding NuGet source for actor."
@@ -242,7 +313,7 @@ runs:
 
         $cmake_command = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { "emcmake cmake" } else { "cmake" }
 
-        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
+        $cppcov_path_arg = if ($env:RUNNER_OS -eq 'Windows' -and '${{ inputs.RUN_TESTS }}' -eq 'true') { '-DCPPCOV_PATH="C:\Program Files\OpenCppCoverage"' } else { '-DCPPCOV_PATH=OFF' }
         $vcpkg_root_arg = if ($env:RUNNER_OS -eq 'Windows') { '-DVCPKG_ROOT=C:/vcpkg' } else { '-DVCPKG_ROOT="${{github.workspace}}/vcpkg"' }
         $vcpkg_chainload_toolchain_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="${{github.workspace}}/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"' } else { '' }
         $vcpkg_triplet_arg = if ('${{ inputs.EMSCRIPTEN }}' -eq 'true') { '-DVCPKG_TARGET_TRIPLET=wasm32-emscripten' } else { '' }
@@ -255,10 +326,12 @@ runs:
         $cmake_command_full += "$vcpkg_root_arg "
         $cmake_command_full += "-DUNIT_DATA_DIR=skyrim_data_files "
         $cmake_command_full += "-DDOWNLOAD_SKYRIM_DATA=ON "
+        $cmake_command_full += "-DBUILD_UNIT_TESTS=${{ inputs.BUILD_UNIT_TESTS }} "
         $cmake_command_full += "-DBUILD_NODEJS=OFF "
         $cmake_command_full += "-DBUILD_FRONT=${{ inputs.BUILD_SKYMP5_FRONT }} "
         $cmake_command_full += "-DSKYMP5_FRONT_REPO_PAT=${{ inputs.SKYMP5_FRONT_PAT }} "
         $cmake_command_full += "$prepare_nexus_archives_arg "
+        $cmake_command_full += "-DOFFLINE_MODE=${{ inputs.OFFLINE_MODE }} "
         $cmake_command_full += "-DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} "
         $cmake_command_full += "-DSKYRIM_VR=${{ inputs.SKYRIM_VR_FLAG }} "
         $cmake_command_full += "$cppcov_path_arg "
@@ -268,8 +341,27 @@ runs:
         Invoke-Expression $cmake_command_full
       shell: powershell
 
+    - name: Verify CEF sandbox library exists (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        $candidates = @(
+          "${{ github.workspace }}\build\vcpkg_installed\x64-windows-sp\share\cef-prebuilt\Release\cef_sandbox.lib",
+          "${{ github.workspace }}\build\vcpkg_installed\x64-windows-sp\share\cef-prebuilt\RelWithDebInfo\cef_sandbox.lib",
+          "${{ github.workspace }}\build\vcpkg_installed\x64-windows-sp\share\cef-prebuilt\MinSizeRel\cef_sandbox.lib"
+        )
+
+        foreach ($candidate in $candidates) {
+          if (Test-Path $candidate) {
+            Write-Host "Found CEF sandbox lib: $candidate"
+            exit 0
+          }
+        }
+
+        throw "cef_sandbox.lib was not found in expected cef-prebuilt locations. Check NuGet auth/binary cache and cef-prebuilt overlay port installation."
+
     - name: Upload vcpkg logs (non-Windows)
-      if: ${{ always() && runner.os != 'Windows' }}
+      if: ${{ failure() && runner.os != 'Windows' }}
       uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
@@ -279,13 +371,13 @@ runs:
 
     # actions/upload-artifact will not work for C:/vcpkg because it's not under github.workspace
     - name: Prepare vcpkg logs (Windows)
-      if: ${{ always() && runner.os == 'Windows' }}
+      if: ${{ failure() && runner.os == 'Windows' }}
       shell: powershell
       run: |
         $logDir = "${{ github.workspace }}\vcpkg_logs"
-        
+
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-        
+
         $sourceDir = "C:\vcpkg\buildtrees"
 
         Get-ChildItem -Path $sourceDir -Filter "*.log" -Recurse | ForEach-Object {
@@ -296,9 +388,8 @@ runs:
           Copy-Item -Path $_.FullName -Destination $destinationPath -Force
         }
 
-
     - name: Upload vcpkg logs (Windows)
-      if: ${{ always() && runner.os == 'Windows' }}
+      if: ${{ failure() && runner.os == 'Windows' }}
       uses: actions/upload-artifact@v7
       with:
         name: vcpkg_logs
@@ -312,7 +403,7 @@ runs:
         path: cmake-profiling-output
 
     - name: BEFORE BUILD
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         script: |
           console.log("!!! BEFORE BUILD !!!")
@@ -321,7 +412,7 @@ runs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       shell: powershell
     - name: AFTER BUILD
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         script: |
           console.log("!!! AFTER BUILD !!!")
@@ -329,7 +420,7 @@ runs:
     # before running tests, because of dist check test
     - name: Compile metadata into public format
       if: ${{ runner.os == 'Windows' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         script: |
           const deployBranch = "${{ inputs.DEPLOY_BRANCH }}";
@@ -354,11 +445,24 @@ runs:
           fs.writeFileSync(outFilePath, JSON.stringify(res, null, 2));
 
     - name: Test
+      if: ${{ inputs.RUN_TESTS == 'true' }}
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}} --verbose # --output-on-failure
       shell: powershell
+
+    - name: Write server release metadata
+      if: ${{ inputs.RELEASE_VERSION != '' }}
+      shell: powershell
+      run: |
+        $payload = @{
+          version = "${{ inputs.RELEASE_VERSION }}"
+          commitSha = "$env:GITHUB_SHA"
+          builtAt = [DateTimeOffset]::UtcNow.ToString('o')
+          source = 'github-actions'
+        }
+        $payload | ConvertTo-Json | Out-File -FilePath "${{github.workspace}}/build/dist/server/release-info.json" -Encoding utf8
 
     - uses: actions/upload-artifact@v7
       with:
@@ -378,14 +482,15 @@ runs:
       with:
         name: ${{ inputs.DESCRIPTION }}_skymp5-client.js
         path: ${{ github.workspace }}/build/dist/client/Data/Platform/Plugins/${{ inputs.DESCRIPTION }}_skymp5-client.js
-        archive: false
 
     - uses: actions/upload-artifact@v7
+      if: ${{ inputs.UPLOAD_SERVER_DIST == 'true' }}
       with:
         name: ${{ inputs.SERVER_DIST_ARTIFACT_NAME }}
         path: ${{github.workspace}}/build/dist/server
 
     - uses: actions/upload-artifact@v7
+      if: ${{ inputs.RUN_TESTS == 'true' }}
       with:
         name: coverage (${{ inputs.DESCRIPTION }})
         path: ${{github.workspace}}/build/__coverage
@@ -404,7 +509,7 @@ runs:
         $artifactName = $artifactName.Replace("%SP_VERSION%", "${{ env.VERSION }}")
         echo "SP_NEXUS_ARTIFACT_NAME=$artifactName" | Out-File -Append -FilePath $env:GITHUB_ENV
       shell: powershell
-      
+
     - uses: actions/upload-artifact@v7
       if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
@@ -413,6 +518,7 @@ runs:
         path: ${{github.workspace}}/build/nexus/sp/data/*
 
     - uses: actions/upload-artifact@v7
+      if: ${{ inputs.SP_NEXUS_ARTIFACT_NAME != 'nope' }}
       with:
         name: papyrus-vm-nexus (${{ inputs.DESCRIPTION }})
         # Data folder is skipped for mod managers

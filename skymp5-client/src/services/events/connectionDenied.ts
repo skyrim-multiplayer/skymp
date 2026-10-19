@@ -1,3 +1,3 @@
 export interface ConnectionDenied {
-    error: string
+  error: string;
 }

@@ -54,6 +54,7 @@ struct WorldState::Impl
   bool formLoadingInProgress = false;
   std::vector<RelootTimeForTypesEntry> relootTimeForTypes;
   std::set<std::string> forbiddenRelootTypes;
+  ItemPickupMode itemPickupMode = ItemPickupMode::Allow;
   std::vector<std::unique_ptr<IPapyrusClassBase>> classes;
   std::array<std::shared_ptr<std::vector<uint32_t>>, 0x100>
     allFormsByModIndexCache;
@@ -452,6 +453,38 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     return false;
   }
 
+  bool isWorldItem = espm::utils::IsItem(t) || isFlor || isTree;
+  if (!itemsEnabled && isWorldItem) {
+    if (optionalOutTrace) {
+      *optionalOutTrace << fmt::format(
+        "AttachEspmRecord - the server skips world items: itemsEnabled = false\n");
+    }
+    return false;
+  }
+
+  if (isWorldItem &&
+      (itemLoadFilter.skipOwned || itemLoadFilter.skipUnowned)) {
+    auto* refrRec = reinterpret_cast<const espm::REFR*>(record);
+    const bool hasOwner =
+      refrRec->GetData(cache).ownerFaction != 0;
+
+    if (itemLoadFilter.skipOwned && hasOwner) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format(
+          "AttachEspmRecord - skipping owned world item (XOWN set): itemLoadFilter.skipOwned = true\n");
+      }
+      return false;
+    }
+
+    if (itemLoadFilter.skipUnowned && !hasOwner) {
+      if (optionalOutTrace) {
+        *optionalOutTrace << fmt::format(
+          "AttachEspmRecord - skipping unowned world item (no XOWN): itemLoadFilter.skipUnowned = true\n");
+      }
+      return false;
+    }
+  }
+
   uint32_t formId = espm::utils::GetMappedId(record->GetId(), mapping);
 
   if (isNpc) {
@@ -553,7 +586,9 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
   if (isNpc && NpcSourceFilesOverriden()) {
     bool isInterior = false, isExterior = false,
          spawnInInterior = defaultSetting.spawnInInterior,
-         spawnInExterior = defaultSetting.spawnInExterior;
+         spawnInExterior = defaultSetting.spawnInExterior,
+         allowHumanoid = defaultSetting.allowHumanoid,
+         allowCreature = defaultSetting.allowCreature;
     espm::LookupResult res = br.LookupById(worldOrCell);
     auto* cellRecord = espm::Convert<espm::CELL>(res.rec);
     if (cellRecord) {
@@ -581,15 +616,38 @@ bool WorldState::AttachEspmRecord(const espm::CombineBrowser& br,
     }
     auto it = npcSettings.find(espmFiles[npcFileIdx]);
     if (it != npcSettings.end()) {
-      spawnInInterior = it->second.spawnInInterior;
-      spawnInExterior = it->second.spawnInExterior;
+      if (it->second.overriden) {
+        spawnInInterior = it->second.spawnInInterior;
+        spawnInExterior = it->second.spawnInExterior;
+      }
+      if (it->second.classOverriden) {
+        allowHumanoid = it->second.allowHumanoid;
+        allowCreature = it->second.allowCreature;
+      }
       spdlog::trace(
-        "found npc setting spawnInInterior: {}, spawnInExterior: {}",
-        spawnInInterior, spawnInExterior);
+        "found npc setting spawnInInterior: {}, spawnInExterior: {}, allowHumanoid: {}, allowCreature: {}",
+        spawnInInterior, spawnInExterior, allowHumanoid, allowCreature);
     } else {
       spdlog::trace("npc setting has not been found. Use default "
-                    "spawnInInterior: {} and spawnInExterior: {}",
-                    spawnInInterior, spawnInExterior);
+                    "spawnInInterior: {} and spawnInExterior: {}, allowHumanoid: {}, allowCreature: {}",
+                    spawnInInterior, spawnInExterior, allowHumanoid,
+                    allowCreature);
+    }
+
+    const bool isHumanoidNpc = HasKeyword(baseId, "ActorTypeNPC");
+    if ((isHumanoidNpc && !allowHumanoid) ||
+        (!isHumanoidNpc && !allowCreature)) {
+      spdlog::trace(
+        "Unable to spawn npc because of class filters: isHumanoid={}, allowHumanoid={}, allowCreature={}",
+        isHumanoidNpc, allowHumanoid, allowCreature);
+      if (optionalOutTrace) {
+        *optionalOutTrace
+          << fmt::format(
+               "Unable to spawn npc because of class filters: isHumanoid={}, allowHumanoid={}, allowCreature={}",
+               isHumanoidNpc, allowHumanoid, allowCreature)
+          << std::endl;
+      }
+      return false;
     }
 
     if (spawnInInterior && isInterior || spawnInExterior && isExterior) {
@@ -1187,6 +1245,16 @@ void WorldState::SetForbiddenRelootTypes(const std::set<std::string>& types)
 void WorldState::SetEnableConsoleCommandsForAllSetting(bool enable)
 {
   enableConsoleCommandsForAll = enable;
+}
+
+void WorldState::SetItemPickupMode(ItemPickupMode mode)
+{
+  pImpl->itemPickupMode = mode;
+}
+
+WorldState::ItemPickupMode WorldState::GetItemPickupMode() const noexcept
+{
+  return pImpl->itemPickupMode;
 }
 
 bool WorldState::IsRelootForbidden(std::string type) const noexcept

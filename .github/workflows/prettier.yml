@@ -1,18 +1,22 @@
 name: Prettier
 on: [push, pull_request]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install yarn packages
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: --cwd=./misc/prettier install
+        run: yarn --cwd=./misc/prettier install
       - name: Check prettier errors
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: --cwd=./misc/prettier prettier-check
-        continue-on-error: true
+        run: |
+          if yarn --cwd=./misc/prettier prettier-check; then
+            echo "Prettier check passed."
+          else
+            echo "::warning title=Prettier::Repository contains formatting mismatches. The check is informational and does not fail CI."
+          fi

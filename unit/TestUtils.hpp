@@ -47,6 +47,7 @@ static const auto jMovement =
                       { "healthPercentage", 1.f },
                       { "speed", 0.f },
                       { "isInJumpState", false },
+                      { "isMounted", false },
                       { "isSneaking", false },
                       { "isBlocking", false },
                       { "isDead", false },

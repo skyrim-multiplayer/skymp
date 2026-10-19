@@ -1,7 +1,8 @@
-import { ObjectReference, Game, Actor, MotionType } from "skyrimPlatform";
-import { Appearance, applyTints } from "../sync/appearance";
-import { NiPoint3 } from "../sync/movement";
-import { ObjectReferenceEx } from "../extensions/objectReferenceEx";
+import { Actor, Game, MotionType, ObjectReference } from 'skyrimPlatform';
+
+import { ObjectReferenceEx } from '../extensions/objectReferenceEx';
+import { Appearance, applyTints } from '../sync/appearance';
+import { NiPoint3 } from '../sync/movement';
 
 export class SpawnProcess {
   constructor(

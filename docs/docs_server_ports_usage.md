@@ -14,20 +14,22 @@ Used to perform synchronization and other basic networking.
 
 Used by the embedded browser to access HTML/CSS/JS and other assets.
 
-- Protocol is HTTPS
-- Default value is 3000
-- Non-configurable
-- Equals `(Main Port + 1)` if its value is non-default
+- Protocol is HTTP
+- Configurable via `uiPort` in `server-settings.json`
+- If `uiPort` is omitted, server uses the same value as `port`
+- `uiListenHost` can be used to control bind address for this HTTP listener
 
 ## WebPack DevServer Port
 
 If you run the WebPack dev server and the skymp server on the same machine, the skymp server would proxy UI requests to the WebPack dev server.
 This feature allows you to use frontend live reload to test game systems.
 
-- Non-configurable, assumed to always be 1234
+- Development probe target is `http://localhost:1234`
+- When available, `/ui/*` requests are proxied to that dev server
+- Other API/asset requests are served by the built-in server app
 
 ## Chromium DevTools
 
 Actually, this is not a serverside port.
 You may need to know that the embedded browser exposes port 9000 for remote DevTools.
-Just type `localhost:9000` in your *real* browser to open Chromium DevTools for the in-game browser.
+Just type `localhost:9000` in your _real_ browser to open Chromium DevTools for the in-game browser.

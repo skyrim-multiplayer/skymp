@@ -4,7 +4,6 @@
 - For using all these features, including Ctrl+S hot reload, take our example plugin as a base https://github.com/skyrim-multiplayer/skymp/tree/main/skyrim-platform/tools/plugin-example. Plugin example is also present in the archive uploaded to Nexus Mods (Data/Platform/plugin-example).
 - When reloading plugins, the added event and hook handlers are removed, asynchronous operations are interrupted and all variables are reset, except for `storage` and its properties.
 
-
 # Changing game console commands
 
 - SkyrimPlatform allows you to change the implementation of any game console command, for such a modification you need to get the console command object by passing the command name to the `findConsoleCommand (commandName)` method, short or long.
@@ -17,8 +16,8 @@
 - Having received such an object, you can change the short (`shortName`) or long (`longName`) command name, as well as the number of accepted arguments (`numArgs`) and the function (`execute`) that will be executed when this console command is called via game console.
 
   ```typescript
-  getAV.longName = "printArg";
-  getAV.shortName = "";
+  getAV.longName = 'printArg';
+  getAV.shortName = '';
   getAV.execute = (refrId: number, arg: string) => {
     printConsole(arg);
     return false;
@@ -31,11 +30,11 @@
 - Since game functions are not available in this context, you must register an `update` event handler with` once` if you want to call a game function when you invoke a console command:
 
 ```typescript
-getAV.longName = "ShowMessageBox";
-getAV.shortName = "";
+getAV.longName = 'ShowMessageBox';
+getAV.shortName = '';
 
 getAV.execute = (refrId: number, arg: string) => {
-  once("update", () => {
+  once('update', () => {
     Debug.messageBox(arg);
   });
   return false;

@@ -116,7 +116,6 @@ dist
 .pnp.*
 
 # ...
-config.js
 
 .idea
 */.DS_Store

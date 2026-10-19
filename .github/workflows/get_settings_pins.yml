@@ -22,15 +22,18 @@ jobs:
       # credentials for. This job just points at it.
       - name: Trigger settings pins report
         env:
+          INSTALLER_REPOSITORY: ${{ vars.INSTALLER_REPOSITORY }}
           GH_TOKEN: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
           SERVER_NAME: ${{ inputs.branch }}
           ACTOR: ${{ github.triggering_actor }}
         run: |
+          : "${INSTALLER_REPOSITORY:?Set the INSTALLER_REPOSITORY repository variable (owner/repo)}"
           body="$(jq -n \
+            --arg ref "$(gh api "repos/$INSTALLER_REPOSITORY" --jq .default_branch)" \
             --arg server "$SERVER_NAME" \
             --arg actor "$ACTOR" \
             '{
-              ref: "master",
+              ref: $ref,
               return_run_details: true,
               inputs: {
                 action: "get_settings_pins",
@@ -40,12 +43,12 @@ jobs:
             }')"
 
           resp="$(gh api --method POST \
-            repos/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml/dispatches \
+            "repos/$INSTALLER_REPOSITORY/actions/workflows/server-settings-1-0.yml/dispatches" \
             --input - <<< "$body")"
 
           run_url="$(jq -r '.html_url // ""' <<< "$resp")"
           if [[ -z "$run_url" ]]; then
-            run_url="https://github.com/skyrim-multiplayer/skymp5-installer-v2/actions/workflows/server-settings-1-0.yml"
+            run_url="https://github.com/$INSTALLER_REPOSITORY/actions/workflows/server-settings-1-0.yml"
           fi
 
           echo "Settings pins for **$SERVER_NAME** are reported in $run_url" \

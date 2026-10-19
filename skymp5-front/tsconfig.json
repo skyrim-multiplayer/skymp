@@ -1,21 +1,20 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist",
-        "allowJs": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "ES6",
-        "jsx": "react",
-        "sourceMap": true,
-        "experimentalDecorators": true,
-        "module": "esnext",
-        "moduleResolution": "node",
-        "importHelpers": true,
-        "lib": [
-          "es2018",
-          "dom"
-        ]
-    },
-        "include": [
-        "./src/**/*"
-    ]
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "5.0",
+    "target": "ES6",
+    "jsx": "react",
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "importHelpers": true,
+    "lib": ["es2018", "dom"]
+  },
+  "include": ["./src/**/*"]
 }

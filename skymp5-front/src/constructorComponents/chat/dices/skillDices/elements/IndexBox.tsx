@@ -11,10 +11,9 @@ interface IIndexBox {
 const IndexBox = ({
   index,
   positiveColor = 'green',
-  negativeColor = 'red'
+  negativeColor = 'red',
 }: IIndexBox) => {
-  return index !== 0
-    ? (
+  return index !== 0 ? (
     <div className="chat-dices__number-container">
       <svg
         className={`chat-dices__number-frame chat-dices__number-frame--${
@@ -40,10 +39,9 @@ const IndexBox = ({
         {index}
       </span>
     </div>
-      )
-    : (
+  ) : (
     <div className="chat-dices__number-container" />
-      );
+  );
 };
 
 export default IndexBox;

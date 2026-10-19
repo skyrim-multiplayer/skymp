@@ -43,6 +43,51 @@ function(yarn_execute_command)
   set("${A_OUTPUT_VARIABLE}" "${yarn_output}" PARENT_SCOPE)
 endfunction()
 
+function(npm_execute_command)
+  cmake_parse_arguments(A "" "WORKING_DIRECTORY;OUTPUT_VARIABLE;RESULT_VARIABLE" "COMMAND" ${ARGN})
+  foreach(arg WORKING_DIRECTORY COMMAND)
+    if("${A_${arg}}" STREQUAL "")
+      message(FATAL_ERROR "Missing ${arg} argument")
+    endif()
+  endforeach()
+
+  # https://github.com/skyrim-multiplayer/skymp/issues/55
+  if(NOT IS_ABSOLUTE "${A_WORKING_DIRECTORY}")
+    message(FATAL_ERROR "Expected WORKING_DIRECTORY to be an absolute path, but got: ${A_WORKING_DIRECTORY}")
+  endif()
+
+  if(WIN32)
+    set(temp_bat "${CMAKE_CURRENT_BINARY_DIR}/temp.bat")
+    set(npm_cmd ${temp_bat})
+    set(npm_arg "")
+    set(str "npm")
+    foreach(arg ${A_COMMAND})
+      string(APPEND str " ${arg}")
+    endforeach()
+    file(WRITE ${temp_bat} ${str})
+  else()
+    set(npm_cmd "npm")
+    set(npm_arg ${A_COMMAND})
+  endif()
+
+  execute_process(COMMAND ${npm_cmd} ${npm_arg}
+    WORKING_DIRECTORY ${A_WORKING_DIRECTORY}
+    RESULT_VARIABLE npm_result
+    OUTPUT_VARIABLE npm_output
+    ERROR_VARIABLE npm_error
+  )
+
+  if("${A_RESULT_VARIABLE}" STREQUAL "")
+    if(NOT "${npm_result}" STREQUAL "0")
+      message(FATAL_ERROR "npm ${A_COMMAND} (working dir ${A_WORKING_DIRECTORY}) exited with ${npm_result}:\n${npm_output}\n${npm_error}")
+    endif()
+  else()
+    set("${A_RESULT_VARIABLE}" "${npm_result}" PARENT_SCOPE)
+  endif()
+
+  set("${A_OUTPUT_VARIABLE}" "${npm_output}" PARENT_SCOPE)
+endfunction()
+
 function(yarn_set_script)
   cmake_parse_arguments(A "" "WORKING_DIRECTORY;NAME;RESULT_VARIABLE;OUTPUT_VARIABLE" "SCRIPT" ${ARGN})
   foreach(arg WORKING_DIRECTORY NAME SCRIPT RESULT_VARIABLE OUTPUT_VARIABLE)

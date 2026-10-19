@@ -1,5 +1,6 @@
-import { EventHandle, Menu, MenuOpenEvent } from "skyrimPlatform";
-import { ClientListener, CombinedController, Sp } from "./clientListener";
+import { EventHandle, Menu, MenuOpenEvent } from 'skyrimPlatform';
+
+import { ClientListener, CombinedController, Sp } from './clientListener';
 
 interface Timer {
   handler: string | Function;
@@ -9,8 +10,8 @@ interface Timer {
 }
 
 enum ProcessMethodType {
-  update = "update",
-  tick = "tick",
+  update = 'update',
+  tick = 'tick',
 }
 
 export class TimersService extends ClientListener {
@@ -18,17 +19,21 @@ export class TimersService extends ClientListener {
     super();
 
     const storageProcessMethod = sp.storage[this.processMethodTypeStorageKey];
-    if (typeof storageProcessMethod !== "function") {
+    if (typeof storageProcessMethod !== 'function') {
       this.setProcessMethod(storageProcessMethod as ProcessMethodType);
     } else {
       this.setProcessMethod(ProcessMethodType.tick);
     }
 
-    this.controller.on("menuOpen", (e) => this.onMenuOpen(e));
-    this.controller.on("preLoadGame", () => this.onPreLoadGame());
+    this.controller.on('menuOpen', (e) => this.onMenuOpen(e));
+    this.controller.on('preLoadGame', () => this.onPreLoadGame());
   }
 
-  setTimeout(handler: string | Function, timeout?: number, ...args: any[]): number {
+  setTimeout(
+    handler: string | Function,
+    timeout?: number,
+    ...args: any[]
+  ): number {
     const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
     for (let i = 0; i < this.timersArr.length; ++i) {
       if (!this.timersArr[i]) {
@@ -53,7 +58,11 @@ export class TimersService extends ClientListener {
     return;
   }
 
-  setInterval(handler: string | Function, timeout?: number, ...args: any[]): number {
+  setInterval(
+    handler: string | Function,
+    timeout?: number,
+    ...args: any[]
+  ): number {
     const timer: Timer = { handler, args, delayMs: timeout ?? 0, passedMs: 0 };
     for (let i = 0; i < this.intervalsArr.length; ++i) {
       if (!this.intervalsArr[i]) {
@@ -81,12 +90,20 @@ export class TimersService extends ClientListener {
   private setProcessMethod(method: ProcessMethodType): void {
     switch (method) {
       case ProcessMethodType.tick:
-        this.sp.storage[this.processMethodTypeStorageKey] = ProcessMethodType.tick;
-        this.updateEventHandle = this.controller.on(ProcessMethodType.tick, () => this.processTimers());
+        this.sp.storage[this.processMethodTypeStorageKey] =
+          ProcessMethodType.tick;
+        this.updateEventHandle = this.controller.on(
+          ProcessMethodType.tick,
+          () => this.processTimers(),
+        );
         return;
       case ProcessMethodType.update:
-        this.sp.storage[this.processMethodTypeStorageKey] = ProcessMethodType.update;
-        this.updateEventHandle = this.controller.on(ProcessMethodType.update, () => this.processTimers());
+        this.sp.storage[this.processMethodTypeStorageKey] =
+          ProcessMethodType.update;
+        this.updateEventHandle = this.controller.on(
+          ProcessMethodType.update,
+          () => this.processTimers(),
+        );
         return;
       default:
         break;
@@ -114,7 +131,7 @@ export class TimersService extends ClientListener {
         timer.passedMs += dt;
         if (timer.passedMs >= timer.delayMs) {
           this.timersArr[i] = null;
-          if (typeof timer.handler === "function") {
+          if (typeof timer.handler === 'function') {
             timer.handler.call(this, timer.args);
           } else {
             eval(timer.handler);
@@ -133,7 +150,7 @@ export class TimersService extends ClientListener {
         interval.passedMs += dt;
         if (interval.passedMs >= interval.delayMs) {
           interval.passedMs = 0;
-          if (typeof interval.handler === "function") {
+          if (typeof interval.handler === 'function') {
             interval.handler.call(this, interval.args);
           } else {
             eval(interval.handler);
@@ -169,5 +186,5 @@ export class TimersService extends ClientListener {
   private updateEventHandle?: EventHandle;
   private lastCallTime: number = Date.now();
 
-  private readonly processMethodTypeStorageKey = "updateTypeStorageKey";
+  private readonly processMethodTypeStorageKey = 'updateTypeStorageKey';
 }

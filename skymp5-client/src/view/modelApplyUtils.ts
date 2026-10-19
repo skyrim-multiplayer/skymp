@@ -1,7 +1,18 @@
-import { ObjectReference, Actor, Game, FormType, TextureSet, NetImmerse } from "skyrimPlatform";
-import { Inventory, applyInventory } from "../sync/inventory";
-import { logError, logTrace } from "../logging";
-import { SetNodeScaleEntry, SetNodeTextureSetEntry } from "src/services/messages/createActorMessage";
+import {
+  Actor,
+  FormType,
+  Game,
+  NetImmerse,
+  ObjectReference,
+  TextureSet,
+} from 'skyrimPlatform';
+import {
+  SetNodeScaleEntry,
+  SetNodeTextureSetEntry,
+} from 'src/services/messages/createActorMessage';
+
+import { logError, logTrace } from '../logging';
+import { Inventory, applyInventory } from '../sync/inventory';
 
 // For 0xff000000+ used from FormView
 // For objects from master files used directly from remoteServer.ts
@@ -23,12 +34,18 @@ export class ModelApplyUtils {
       const openOrOpening = [1, 2].includes(refr.getOpenState());
       if (openOrOpening) {
         if (!isOpen) {
-          refr.activate(ObjectReference.from(Game.getForm(parentActivatorId)), false);
+          refr.activate(
+            ObjectReference.from(Game.getForm(parentActivatorId)),
+            false,
+          );
         }
       }
       if (!openOrOpening) {
         if (isOpen) {
-          refr.activate(ObjectReference.from(Game.getForm(parentActivatorId)), false);
+          refr.activate(
+            ObjectReference.from(Game.getForm(parentActivatorId)),
+            false,
+          );
         }
       }
     }
@@ -101,28 +118,67 @@ export class ModelApplyUtils {
     }
   }
 
-  static applyModelNodeTextureSet(refr: ObjectReference, setNodeTextureSet?: SetNodeTextureSetEntry[]) {
+  static applyModelNodeTextureSet(
+    refr: ObjectReference,
+    setNodeTextureSet?: SetNodeTextureSetEntry[],
+  ) {
     if (setNodeTextureSet) {
-      setNodeTextureSet.forEach(element => {
+      setNodeTextureSet.forEach((element) => {
         const firstPerson = false;
 
-        const textureSet = TextureSet.from(Game.getFormEx(element.textureSetId));
+        const textureSet = TextureSet.from(
+          Game.getFormEx(element.textureSetId),
+        );
         if (textureSet !== null) {
-          NetImmerse.setNodeTextureSet(refr, element.nodeName, textureSet, firstPerson);
-          logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied texture set`, element.textureSetId.toString(16), `to`, element.nodeName);
+          NetImmerse.setNodeTextureSet(
+            refr,
+            element.nodeName,
+            textureSet,
+            firstPerson,
+          );
+          logTrace(
+            'ModelApplyUtils',
+            refr.getFormID().toString(16),
+            `Applied texture set`,
+            element.textureSetId.toString(16),
+            `to`,
+            element.nodeName,
+          );
         } else {
-          logError("ModelApplyUtils", refr.getFormID().toString(16), `Failed to apply texture set`, element.textureSetId.toString(16), `to`, element.nodeName);
+          logError(
+            'ModelApplyUtils',
+            refr.getFormID().toString(16),
+            `Failed to apply texture set`,
+            element.textureSetId.toString(16),
+            `to`,
+            element.nodeName,
+          );
         }
       });
     }
   }
 
-  static applyModelNodeScale(refr: ObjectReference, setNodeScale?: SetNodeScaleEntry[]) {
+  static applyModelNodeScale(
+    refr: ObjectReference,
+    setNodeScale?: SetNodeScaleEntry[],
+  ) {
     if (setNodeScale) {
-      setNodeScale.forEach(element => {
+      setNodeScale.forEach((element) => {
         const firstPerson = false;
-        NetImmerse.setNodeScale(refr, element.nodeName, element.scale, firstPerson);
-        logTrace("ModelApplyUtils", refr.getFormID().toString(16), `Applied node scale`, element.scale, `to`, element.nodeName);
+        NetImmerse.setNodeScale(
+          refr,
+          element.nodeName,
+          element.scale,
+          firstPerson,
+        );
+        logTrace(
+          'ModelApplyUtils',
+          refr.getFormID().toString(16),
+          `Applied node scale`,
+          element.scale,
+          `to`,
+          element.nodeName,
+        );
       });
     }
   }

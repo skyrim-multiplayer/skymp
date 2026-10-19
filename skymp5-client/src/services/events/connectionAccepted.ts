@@ -1,2 +1,1 @@
-export interface ConnectionAccepted {
-}
+export interface ConnectionAccepted {}

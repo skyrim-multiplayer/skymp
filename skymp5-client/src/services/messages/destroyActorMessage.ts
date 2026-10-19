@@ -1,6 +1,6 @@
-import { MsgType } from "../../messages";
+import { MsgType } from '../../messages';
 
 export interface DestroyActorMessage {
-    t: MsgType.DestroyActor,
-    idx: number;
+  t: MsgType.DestroyActor;
+  idx: number;
 }

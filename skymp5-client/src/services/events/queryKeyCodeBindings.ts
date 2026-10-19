@@ -1,5 +1,5 @@
-import { DxScanCode } from "@skyrim-platform/skyrim-platform";
+import { DxScanCode } from '@skyrim-platform/skyrim-platform';
 
 export interface QueryKeyCodeBindings {
-    isDown: (binding: DxScanCode[]) => boolean;
+  isDown: (binding: DxScanCode[]) => boolean;
 }

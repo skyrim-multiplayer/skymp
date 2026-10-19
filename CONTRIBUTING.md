@@ -18,7 +18,7 @@ You can find instructions on setting up the project locally below. To get a loca
 
 These tools required regardless of your system:
 
-* 64-bit [NodeJS](https://nodejs.org/en/download/) 17.x *(may also work for older versions)*
+* 64-bit [NodeJS](https://nodejs.org/en/download/) 18+ (current LTS recommended)
 * [Yarn](https://yarnpkg.com/getting-started/install): `npm install --global yarn`
 * [CMake 3.19](https://cmake.org/download/) or higher
 
@@ -162,6 +162,166 @@ Check `podman run` [documentation](https://docs.podman.io/en/latest/markdown/pod
    ctest -C Debug --verbose
    ```
    These commands would re-generate project files with coverage enabled and run tests. Coverage report would be in `build/__coverage`.
+
+## Frontend Development
+
+The frontend code is located in `skymp5-front` directory and uses **React 18** with **TypeScript** and **Webpack**.
+
+### Setup
+
+1. Navigate to the frontend directory:
+   ```sh
+   cd skymp5-front
+   ```
+
+2. Install dependencies:
+   ```sh
+   npm ci
+   ```
+
+   Frontend dependency management is npm-only. If `npm ci` fails because of lockfile drift, regenerate with `npm install` and commit the resulting `package-lock.json` updates.
+
+### Development Server
+
+To run the development server with hot module reloading:
+```sh
+npm run watch
+```
+
+The application will be available at `http://localhost:3000` (or the configured port).
+
+Other useful modes:
+
+```sh
+# fixed local port (1234)
+npm run watch:fixed
+
+# LAN testing (binds to 0.0.0.0)
+npm run dev:lan
+```
+
+### Building for Production
+
+```sh
+npm run build
+```
+
+Output artifacts will be placed in `skymp5-front/dist`.
+
+### Code Style Guidelines
+
+#### TypeScript
+
+- Use **explicit types** for function parameters and return values
+- Prefer interfaces over type aliases for object shapes
+- Prefer strict-safe code (null/undefined checks, narrowings, and explicit guards)
+- Avoid `any` types - use generics or proper typing instead
+- Use `const` by default, `let` only when reassignment is needed
+
+#### React
+
+- Use **functional components** with hooks exclusively
+- Use `useState`, `useEffect`, `useMemo`, `useCallback` appropriately
+- Prefer named functions over arrow functions for components
+- Always include dependency arrays in `useEffect`
+
+#### Formatting
+
+- Use VS Code's `Format Document` for consistent formatting in edited files.
+- **Double quotes** for strings (configured in Prettier)
+- **Spaces over tabs** - 2 spaces per indent level
+- **Max line length**: 100 characters (soft guideline)
+
+#### ESLint
+
+Lint checks are run automatically during the build process. To check locally:
+```sh
+npm run lint
+```
+
+To automatically fix linting issues:
+```sh
+npm run lint:fix
+```
+
+### Testing
+
+The project uses automated tests to verify functionality, especially for localization and component consistency.
+
+#### Run All Tests
+
+```sh
+npm run test
+```
+
+#### Run Specific Tests
+
+Test for locale key consistency (ensures `en.json`, `ru.json`, `de.json`, `es.json` have matching structure):
+```sh
+npm run test:i18n
+```
+
+Run frontend unit tests:
+```sh
+npm run test:unit
+```
+
+Run API integration tests:
+```sh
+npm run test:api
+```
+
+Run E2E smoke tests:
+```sh
+npm run test:e2e
+```
+
+Preview UI components in Storybook:
+```sh
+npm run storybook
+```
+
+There is currently no dedicated `test:coverage` frontend script in `skymp5-front/package.json`.
+
+### Localization (i18n)
+
+The project supports multiple languages: **English (en)**, **Russian (ru)**, **German (de)**, **Spanish (es)**, **French (fr)**, and **Italian (it)**.
+
+Locale files are located in `src/locales/`:
+- `src/locales/en.json`
+- `src/locales/ru.json`
+- `src/locales/de.json`
+- `src/locales/es.json`
+- `src/locales/fr.json`
+- `src/locales/it.json`
+
+All six files must have the **same key structure**. When adding new UI strings:
+
+1. Add the key-value pair to all six locale files with the same structure
+2. Run the locale test to verify:
+   ```sh
+   npm run test:i18n
+   ```
+3. Use the key in your component:
+   ```tsx
+   const { t } = useTranslation();
+   return <div>{t('your.locale.key')}</div>;
+   ```
+
+### TypeScript Configuration
+
+Key settings in `skymp5-front/tsconfig.json`:
+- `"resolveJsonModule": true` - Allows importing JSON files as modules
+- `"ignoreDeprecations": "6.0"` - Suppresses TypeScript 6 deprecation warnings
+- `"rootDir": "./src"` - Root directory for source files
+
+## CI/CD Notes
+
+- PR build workflows for Windows/VR/Emscripten use `.github/actions/pr_base/action.yml`.
+- Discord deploy notifications are used in deploy workflows via `DEPLOY_STATUS_WEBHOOK`.
+- Installer binaries are not built in this repository. Push to `main` triggers `.github/workflows/trigger-installer.yml`, which sends `repository_dispatch` to the installer repository.
+- Installer dispatch target is configured by repository variable `INSTALLER_REPOSITORY` (format `owner/repo`).
+- Installer dispatch authentication uses repository secret `SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT`.
 
 ## Pull Requests
 

@@ -15,12 +15,14 @@
 #include "UpdatePropertyMessage.h"
 #include "WorldState.h"
 #include "gamemode_events/ActivateEvent.h"
+#include "gamemode_events/ItemPickupAttemptEvent.h"
 #include "gamemode_events/PutItemEvent.h"
 #include "gamemode_events/TakeItemEvent.h"
 #include "libespm/CompressedFieldsCache.h"
 #include "libespm/Convert.h"
 #include "libespm/GroupUtils.h"
 #include "libespm/Utils.h"
+#include "libespm/RecordFlags.h"
 #include "papyrus-vm/Reader.h"
 #include "papyrus-vm/Utils.h" // stricmp
 #include "papyrus-vm/VirtualMachine.h"
@@ -33,6 +35,7 @@
 #include <map>
 #include <numeric>
 #include <optional>
+#include <unordered_set>
 
 #include "OpenContainerMessage.h"
 #include "SetInventoryMessage.h"
@@ -1360,6 +1363,40 @@ void MpObjectReference::GivePickupItemsToActivationSource(
   auto& compressedFieldsCache = GetParent()->GetEspmCache();
   auto t = base.rec->GetType();
 
+  const auto itemPickupMode = GetParent()->GetItemPickupMode();
+  if (itemPickupMode == WorldState::ItemPickupMode::BlockAll) {
+    spdlog::debug("MpObjectReference::GivePickupItemsToActivationSource "
+                  "{:#x} - blocked by itemPickupMode=block-all",
+                  GetFormId());
+    return;
+  }
+
+  auto refrRecord =
+    espm::Convert<espm::REFR>(loader.GetBrowser().LookupById(GetFormId()).rec);
+  const bool isOwned =
+    refrRecord && refrRecord->GetData(compressedFieldsCache).ownerFaction != 0;
+
+  auto canGiveItem = [&](uint32_t itemBaseId, uint32_t itemCount) {
+    if (itemPickupMode != WorldState::ItemPickupMode::Minigame) {
+      return true;
+    }
+
+    auto actorActivator = activationSource.AsActor();
+    if (!actorActivator) {
+      return true;
+    }
+
+    auto itemLookupRes = loader.GetBrowser().LookupById(itemBaseId);
+    bool isQuestItem =
+      itemLookupRes.rec &&
+      (itemLookupRes.rec->GetFlags() &
+       static_cast<uint32_t>(espm::RecordFlags::QuestItem)) != 0;
+
+    ItemPickupAttemptEvent attemptEvent(this, actorActivator, itemBaseId,
+                                        itemCount, isOwned, isQuestItem);
+    return attemptEvent.Fire(GetParent());
+  };
+
   auto mapping = loader.GetBrowser().GetCombMapping(base.fileIdx);
   uint32_t resultItem = 0;
   if (espm::utils::Is<espm::TREE>(t)) {
@@ -1396,7 +1433,9 @@ void MpObjectReference::GivePickupItemsToActivationSource(
       loader.GetBrowser(), resultItemLookupRes, kCountMult,
       kPlayerCharacterLevel, chanceNoneOverride.get());
     for (auto& p : map) {
-      activationSource.AddItem(p.first, p.second);
+      if (canGiveItem(p.first, p.second)) {
+        activationSource.AddItem(p.first, p.second);
+      }
     }
   } else {
     auto refrRecord = espm::Convert<espm::REFR>(
@@ -1412,7 +1451,9 @@ void MpObjectReference::GivePickupItemsToActivationSource(
     uint32_t resultingCount =
       std::max(kCountDefault, std::max(countRecord, countChangeForm));
 
-    activationSource.AddItem(resultItem, resultingCount);
+    if (canGiveItem(resultItem, resultingCount)) {
+      activationSource.AddItem(resultItem, resultingCount);
+    }
   }
 }
 
@@ -1791,8 +1832,13 @@ void MpObjectReference::InitScripts()
     auto lookupRes =
       GetParent()->GetEspm().GetBrowser().LookupById(cellOrWorld);
     if (lookupRes.rec && lookupRes.rec->GetType() == "WRLD") {
-      spdlog::info("Skipping non-Sweet scripts for exterior form {:x}",
-                   cellOrWorld);
+      static std::unordered_set<uint32_t> reportedExteriorWorlds;
+      if (reportedExteriorWorlds.insert(cellOrWorld).second) {
+        spdlog::info(
+          "Skipping non-Sweet scripts for exterior world {:x} "
+          "(logging once per world)",
+          cellOrWorld);
+      }
       scriptNames.erase(std::remove_if(scriptNames.begin(), scriptNames.end(),
                                        [](const std::string& val) {
                                          auto kPrefix = "Sweet";
@@ -1813,7 +1859,9 @@ void MpObjectReference::InitScripts()
       !Utils::stricmp(val.data(), "DA06PreRitualSceneTriggerScript") ||
       !Utils::stricmp(val.data(), "CritterSpawn");
 
-    spdlog::info("Skipping script {}", val);
+    if (isRemoveNeeded) {
+      spdlog::debug("Skipping unsupported script {}", val);
+    }
 
     return isRemoveNeeded;
   };

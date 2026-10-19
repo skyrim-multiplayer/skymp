@@ -1,13 +1,14 @@
-import { Inventory } from "skyrimPlatform";
-import { MsgType } from "../../messages";
+import { Inventory } from 'skyrimPlatform';
+
+import { MsgType } from '../../messages';
 
 export interface CraftItemMessage {
-    t: MsgType.CraftItem,
-    data: CraftItemMessageData
+  t: MsgType.CraftItem;
+  data: CraftItemMessageData;
 }
 
 interface CraftItemMessageData {
-    workbench: number;
-    craftInputObjects: Inventory;
-    resultObjectId: number;
+  workbench: number;
+  craftInputObjects: Inventory;
+  resultObjectId: number;
 }

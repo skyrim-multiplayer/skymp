@@ -1,1 +1,1 @@
-export interface AuthNeededEvent { }
+export interface AuthNeededEvent {}

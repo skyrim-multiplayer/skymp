@@ -141,8 +141,9 @@ VarValue ScriptVariablesHolder::CastPrimitivePropertyValue(
       if (!gameObject) {
         auto lookupResult = br.LookupById(propValueFormIdGlobal);
         if (!lookupResult.rec) {
-          spdlog::error(
-            "CastPrimitivePropertyValue {} - Record with id {:x} not found",
+          spdlog::trace(
+            "CastPrimitivePropertyValue {} - Record with id {:x} not found"
+            " (expected for engine-internal forms like PlayerRef 0x14)",
             myScriptName, propValueFormIdGlobal);
         } else {
           auto type = lookupResult.rec->GetType();

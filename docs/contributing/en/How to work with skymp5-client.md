@@ -8,6 +8,8 @@
 8. Run the game using `skse64_loader.exe`.
 9. You may need to see your clone to test synchro. To do this, write "show-me": true in `build/dist/client/skymp5-client-settings.txt`. Reboot is not required.
 10. You can also set "show-net-info": true to diagnose packages.
+11. For movement diagnostics, add "show-movement-debug": true (shows interpolation/prediction metrics in HUD debug output).
+12. If you want to disable periodic movement telemetry packets to the server, set "send-movement-debug-telemetry": false.
 
 You don't need to build with cmake and keep watch running at the same time, otherwise skymp5-client will be damaged, it will throw scary and meaningless exceptions at the game console that you cannot fix. Solved by turning off and on watch.
 

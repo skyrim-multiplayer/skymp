@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
+
 import SkyrimButton from '../../components/SkyrimButton/SkyrimButton';
+import SkyrimHint from '../../components/SkyrimHint';
 import SkyrimInput from '../../components/SkyrimInput';
 import { toggleClass } from '../../utils/toggleClass';
-import SkyrimHint from '../../components/SkyrimHint';
 
-const RegisterForm = props => {
+const RegisterForm = (props) => {
   const [data, setData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [isButtonBack, setButtonBack] = useState(true);
   const [isRegisterHintOpened, setRegisterHintOpened] = useState(false);
@@ -43,39 +44,67 @@ const RegisterForm = props => {
     return () => document.removeEventListener('keypress', listener);
   }, [data, isButtonBack]);
   return (
-        <div className={'login-form--content_main'}>
-            <div className={'login-form--content_main__email'}>
-                <div className={'login-form--content_main__label'}>
-                    <span className={'login-form--content_main__label___text'}>{props.locale.LOGIN.EMAIL}</span>
-                    <img src={require('../../img/mail.svg').default} alt=""/>
-                </div>
-                <SkyrimInput onInput={handleInput} placeholder={props.locale.LOGIN.EMAIL_PLACEHOLDER} type={'text'} name={'email'}/>
-
-            </div>
-            <div className={'login-form--content_main__password'}>
-                <div className={'login-form--content_main__label'}>
-                    <span className={'login-form--content_main__label___text'} >{props.locale.LOGIN.PASSWORD}</span>
-                    <img src={require('../../img/password.svg').default} alt=""/>
-                </div>
-                <SkyrimInput onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER} type={'password'} name={'password'}/>
-            </div>
-            <div className={'login-form--content_main__password'}>
-                <div className={'login-form--content_main__label'}>
-                    <span className={'login-form--content_main__label___text'} >{props.locale.LOGIN.PASSWORD_VERIFY}</span>
-                    <img src={require('../../img/password.svg').default} alt=""/>
-                </div>
-                <SkyrimInput onInput={handleInput} placeholder={props.locale.LOGIN.PASSWORD_VERIFY_PLACEHOLDER} type={'password'} name={'password_verify'}/>
-            </div>
-            <div className={'login-form--content_main__button'}>
-                <SkyrimButton disabled={!isButtonBack && isButtonDisabled} onClick={(e) => {
-                  if (isButtonBack) {
-                    props.setRegister(false);
-                  } else {
-                    console.log(data);
-                  }
-                }} text={isButtonBack ? props.locale.LOGIN.BACK : props.locale.LOGIN.LOGIN_BUTTON_TEXT}/>
-            </div>
+    <div className={'login-form--content_main'}>
+      <div className={'login-form--content_main__email'}>
+        <div className={'login-form--content_main__label'}>
+          <span className={'login-form--content_main__label___text'}>
+            {props.locale.LOGIN.EMAIL}
+          </span>
+          <img src={require('../../img/mail.svg').default} alt="" />
         </div>
+        <SkyrimInput
+          onInput={handleInput}
+          placeholder={props.locale.LOGIN.EMAIL_PLACEHOLDER}
+          type={'text'}
+          name={'email'}
+        />
+      </div>
+      <div className={'login-form--content_main__password'}>
+        <div className={'login-form--content_main__label'}>
+          <span className={'login-form--content_main__label___text'}>
+            {props.locale.LOGIN.PASSWORD}
+          </span>
+          <img src={require('../../img/password.svg').default} alt="" />
+        </div>
+        <SkyrimInput
+          onInput={handleInput}
+          placeholder={props.locale.LOGIN.PASSWORD_PLACEHOLDER}
+          type={'password'}
+          name={'password'}
+        />
+      </div>
+      <div className={'login-form--content_main__password'}>
+        <div className={'login-form--content_main__label'}>
+          <span className={'login-form--content_main__label___text'}>
+            {props.locale.LOGIN.PASSWORD_VERIFY}
+          </span>
+          <img src={require('../../img/password.svg').default} alt="" />
+        </div>
+        <SkyrimInput
+          onInput={handleInput}
+          placeholder={props.locale.LOGIN.PASSWORD_VERIFY_PLACEHOLDER}
+          type={'password'}
+          name={'password_verify'}
+        />
+      </div>
+      <div className={'login-form--content_main__button'}>
+        <SkyrimButton
+          disabled={!isButtonBack && isButtonDisabled}
+          onClick={(e) => {
+            if (isButtonBack) {
+              props.setRegister(false);
+            } else {
+              console.log(data);
+            }
+          }}
+          text={
+            isButtonBack
+              ? props.locale.LOGIN.BACK
+              : props.locale.LOGIN.LOGIN_BUTTON_TEXT
+          }
+        />
+      </div>
+    </div>
   );
 };
 

@@ -9,7 +9,7 @@ Server's name that will be published on a master server.
 ```json5
 {
   // ...
-  "name": "My Server"
+  name: 'My Server',
   // ...
 }
 ```
@@ -21,7 +21,7 @@ Specify the server key you wish to use for Master API. Client must have the same
 ```json5
 {
   // ...
-  "masterKey": "my-awesome-server",
+  masterKey: 'my-awesome-server',
   // ...
 }
 ```
@@ -33,7 +33,7 @@ Specifies the IP address to bind to. Applies to the main UDP traffic (RakNet). B
 ```json5
 {
   // ...
-  "listenHost": "127.0.0.1",
+  listenHost: '127.0.0.1',
   // ...
 }
 ```
@@ -45,7 +45,26 @@ Specifies the IP address to bind to. Applies to the `uiPort` (http). Binds to `0
 ```json5
 {
   // ...
-  "uiListenHost": "127.0.0.1",
+  uiListenHost: '127.0.0.1',
+  // ...
+}
+```
+
+## adminApi
+
+Admin API and dashboard URL behavior.
+
+- `enabled` controls whether admin API routes are available.
+- `externalUrl` can be left empty (`""`) so runtime auto-detect uses incoming `Host` and `X-Forwarded-Proto` headers.
+- If `externalUrl` is set, that explicit value is used for dashboard URL generation.
+
+```json5
+{
+  // ...
+  adminApi: {
+    enabled: true,
+    externalUrl: '',
+  },
   // ...
 }
 ```
@@ -59,10 +78,43 @@ If omitted, `/metrics` is not available.
 ```json5
 {
   // ...
-  "metricsAuth": {
-    "user": "prometheus",
-    "password": "secret"
+  metricsAuth: {
+    user: 'prometheus',
+    password: 'secret',
   },
+  // ...
+}
+```
+
+## adminUiAuth
+
+Credentials for the web admin dashboard (`/admin`).
+
+If omitted, the server falls back to `metricsAuth` credentials. If neither is configured, admin dashboard login is unavailable.
+
+Note: this key is treated as a legacy bootstrap source and may be removed from `server-settings.json` by newer admin flows.
+
+```json5
+{
+  // ...
+  adminUiAuth: {
+    user: 'admin',
+    password: 'admin',
+  },
+  // ...
+}
+```
+
+## uiPort
+
+HTTP port used for server resources and admin dashboard routes (for example `/admin`, `/api/admin/*`, `/metrics`).
+
+If omitted, the server uses `port`.
+
+```json5
+{
+  // ...
+  uiPort: 8080,
   // ...
 }
 ```
@@ -74,7 +126,7 @@ This port would be used by player clients to connect to your server. At the curr
 ```json5
 {
   // ...
-  "port": 7777
+  port: 7777,
   // ...
 }
 ```
@@ -86,7 +138,7 @@ Sets player limit of the server. Visible in launcher and on skymp.io.
 ```json5
 {
   // ...
-  "maxPlayers": 108
+  maxPlayers: 108,
   // ...
 }
 ```
@@ -94,20 +146,22 @@ Sets player limit of the server. Visible in launcher and on skymp.io.
 ## dataDir
 
 Contains relative or absolute path to a "data" directory which contains:
-* vanilla Skyrim master files (Skyrim.esm, Update.esm, etc)
-* plugin files (mods in .esp format)
-* compiled Papyrus scripts in .pex format
+
+- vanilla Skyrim master files (Skyrim.esm, Update.esm, etc)
+- plugin files (mods in .esp format)
+- compiled Papyrus scripts in .pex format
 
 This directory is exposed to `uiPort` and available via http.
 
 At this moment, the server uses this directory for non-vanilla needs too:
-* storing web-based GUI in `${dataDir}/ui`
-* storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
+
+- storing web-based GUI in `${dataDir}/ui`
+- storing auto-generated manifest describing .esm/.esp files used and CRC32 of them
 
 ```json5
 {
   // ...
-  "dataDir": "data"
+  dataDir: 'data',
   // ...
 }
 ```
@@ -123,13 +177,13 @@ Absolute paths work but aren't accessible via `uiPort`. External tooling wouldn'
 ```json5
 {
   // ...
-  "loadOrder": [
-    "Skyrim.esm",
-    "Update.esm",
-    "Dawnguard.esm",
-    "HearthFires.esm",
-    "Dragonborn.esm"
-  ]
+  loadOrder: [
+    'Skyrim.esm',
+    'Update.esm',
+    'Dawnguard.esm',
+    'HearthFires.esm',
+    'Dragonborn.esm',
+  ],
   // ...
 }
 ```
@@ -145,9 +199,7 @@ Relative/absolute paths work similar to esp/esm.
 ```json5
 {
   // ...
-  "archives": [
-    "Skyrim - Misc.bsa"
-  ]
+  archives: ['Skyrim - Misc.bsa'],
   // ...
 }
 ```
@@ -159,7 +211,7 @@ The language, the translation of which will be obtained from the string files lo
 ```json5
 {
   // ...
-  "lang": "english"
+  lang: 'english',
   // ...
 }
 ```
@@ -172,7 +224,7 @@ Users need to specify `"profileId"` in their `skymp5-settings.txt`.
 ```json5
 {
   // ...
-  "offlineMode": true
+  offlineMode: true,
   // ...
 }
 ```
@@ -184,7 +236,7 @@ Name of a database driver which would be used to store server data. `file` by de
 ```json5
 {
   // ...
-  "databaseDriver": "file"
+  databaseDriver: 'file',
   // ...
 }
 ```
@@ -196,33 +248,185 @@ A time before a game object restores its original state in milliseconds. Unlike 
 ```json5
 {
   // ...
-  "reloot": {
-    "FLOR": 86400000,
-    "TREE": 86400000,
-    "AMMO": 86400000,
-    "ARMO": 86400000,
-    "BOOK": 86400000,
-    "INGR": 86400000,
-    "ALCH": 86400000,
-    "SCRL": 86400000,
-    "CONT": 86400000,
-    "SLGM": 86400000,
-    "WEAP": 86400000,
-    "MISC": 86400000
-  }
+  reloot: {
+    FLOR: 86400000,
+    TREE: 86400000,
+    AMMO: 86400000,
+    ARMO: 86400000,
+    BOOK: 86400000,
+    INGR: 86400000,
+    ALCH: 86400000,
+    SCRL: 86400000,
+    CONT: 86400000,
+    SLGM: 86400000,
+    WEAP: 86400000,
+    MISC: 86400000,
+  },
   // ...
 }
 ```
 
 ## forbiddenReloot
-The option that allows you to forbid reloot for a specific item or a group of items based on its/their espm record type. Take a look at [UESP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format).
 
+The option that allows you to forbid reloot for a specific item or a group of items based on its/their espm record type. Take a look at [UESP](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format).
 
 ```json5
 {
   // ...
   // here your record types go
   "forbiddenReloot": ["FLOR", "TREE", "BOOK", ... ]
+  // ...
+}
+```
+
+## itemPickupMode
+
+Controls how world-item pickup works when players activate loose objects, flora or trees.
+
+- `"allow"` (default): keeps current behavior, item is picked up immediately.
+- `"minigame"`: calls gamemode hook `mp.onItemPickupAttempt(...)` before pickup. If any listener blocks the event, pickup is denied.
+- `"block-all"`: disables world-item pickup entirely.
+
+```json5
+{
+  // ...
+  itemPickupMode: 'minigame',
+  // ...
+}
+```
+
+When `itemPickupMode` is set to `"minigame"`, the server fires this hook:
+
+```ts
+mp.onItemPickupAttempt = (
+  sourceRefrId: number,
+  actorRefrId: number,
+  itemBaseId: number,
+  itemCount: number,
+  isOwned: boolean,
+  isQuestItem: boolean,
+) => {
+  // return false to block pickup
+  return !isOwned && !isQuestItem;
+};
+```
+
+## timeScale
+
+Controls the speed of in-game time relative to real time. Default is `20` (Skyrim's own default).
+
+The formula is: **1 real second = `timeScale` in-game seconds**.
+
+| `timeScale` | 1 real second = … in-game | 1 real minute = … in-game | Notes |
+|-------------|---------------------------|---------------------------|-------|
+| `1`         | 1 s                       | 1 min                     | Real time — clock matches the real world |
+| `20`        | 20 s                      | 20 min                    | **Skyrim default** — one in-game day ≈ 72 real minutes |
+| `60`        | 1 min                     | 1 h                       | One in-game day ≈ 24 real minutes |
+| `3600`      | 1 h                       | 1 day                     | Extreme — one in-game day ≈ 24 real seconds |
+| `0`         | 0 s                       | 0 min                     | Freeze time |
+
+```json5
+{
+  // ...
+  timeScale: 20,
+  // ...
+}
+```
+
+## itemsEnabled
+
+When set to `false`, world-item references are never instantiated. No loose items will appear in the game world. Default is `true`.
+
+Useful for PvP-focused servers that don't need dungeon loot.
+
+```json5
+{
+  // ...
+  itemsEnabled: false,
+  // ...
+}
+```
+
+## itemLoadFilter
+
+Granular per-ownership filter applied when `itemsEnabled` is `true`. Based on the `XOWN` field in the ESP/ESM record.
+
+- `skipOwned` (default `false`): skip items that belong to an NPC or faction (`XOWN != 0`), i.e. shop inventory and theft items.
+- `skipUnowned` (default `false`): skip free-loot items (`XOWN == 0`), i.e. dungeon loot with no owner.
+
+Both flags may be set simultaneously, in which case no items will be instantiated (equivalent to `itemsEnabled: false`).
+
+```json5
+{
+  // ...
+  itemLoadFilter: {
+    skipOwned: true,   // no shop/NPC items
+    skipUnowned: false, // keep free dungeon loot
+  },
+  // ...
+}
+```
+
+## pluginDiscovery
+
+Controls how the server handles newly discovered plugins at startup.
+
+- `mode: "safe"` (recommended for daemon/production): new plugins are left disabled (`startupEnabled: false`) and require manual activation.
+- `mode: "prompt"`: an interactive yes/no prompt is shown for each newly discovered plugin when the server starts on a TTY.
+
+If omitted, defaults to `"safe"` mode.
+
+```json5
+{
+  // ...
+  pluginDiscovery: {
+    mode: 'safe',
+  },
+  // ...
+}
+```
+
+See also `pluginsLoadOrder` and the Plugin System documentation.
+
+Optional nested key:
+
+- `processCommandAllowlist`: string array that restricts which commands may be started by `kind: process` plugins.
+- Matching is done against either the full command string or its basename.
+- If omitted, no additional command restriction is applied (backward compatible).
+
+```json5
+{
+  // ...
+  pluginDiscovery: {
+    mode: 'safe',
+    processCommandAllowlist: ['node', 'node.exe'],
+  },
+  // ...
+}
+```
+
+## pluginsLoadOrder
+
+Explicit load order for plugins. Plugins listed here are started first (in the given order), followed by any remaining enabled plugins in alphabetical order.
+
+```json5
+{
+  // ...
+  pluginsLoadOrder: ['core', 'chat-server', 'emotewheel'],
+  // ...
+}
+```
+
+## abortOnPluginError
+
+When `true`, any non-`optional` plugin that fails to load will abort the server startup. Default is `false`.
+
+Set to `true` in production to prevent a partially-loaded plugin set from running silently.
+
+```json5
+{
+  // ...
+  abortOnPluginError: true,
   // ...
 }
 ```
@@ -235,7 +439,7 @@ Searches for `index.js` if a directory specified.
 ```json5
 {
   // ...
-  "gamemodePath": "gamemode.js"
+  gamemodePath: 'gamemode.js',
   // ...
 }
 ```
@@ -247,16 +451,81 @@ Contains a list of spawn points, one of which will be chosen at random.
 ```json5
 {
   // ...
-  "startPoints": [
+  startPoints: [
     {
-      "pos": [22659, -8697, -3594],
-      "worldOrCell": "0x1a26f",
-      "angleZ": 268
-    }
-  ]
+      pos: [22659, -8697, -3594],
+      worldOrCell: '0x1a26f',
+      angleZ: 268,
+    },
+  ],
   // ...
 }
 ```
+
+## startSpawn
+
+Contains a single spawn point for newly created characters.
+If `startSpawn` is present, the server uses it as the only initial spawn point.
+
+```json5
+{
+  // ...
+  startSpawn: {
+    pos: [22659, -8697, -3594],
+    worldOrCell: '0x1a26f',
+    angleZ: 268,
+  },
+  // ...
+}
+```
+
+This is only used when a character is created for the first time.
+Afterwards the actor respawns at its saved `spawnPoint`.
+
+## starterInventory
+
+Contains the inventory that is assigned once to newly created characters.
+
+```json5
+{
+  // ...
+  starterInventory: {
+    entries: [
+      {
+        baseId: 0x1397e,
+        count: 1,
+        worn: true,
+      },
+      {
+        baseId: 0x12eb7,
+        count: 1,
+        worn: true,
+      },
+      {
+        baseId: 0x3eada,
+        count: 10,
+      },
+    ],
+  },
+  // ...
+}
+```
+
+Supported entry fields include:
+
+- `baseId`
+- `count`
+- `worn`
+- `wornLeft`
+- `health`
+- `enchantmentId`
+- `maxCharge`
+- `removeEnchantmentOnUnequip`
+- `chargePercent`
+- `name`
+- `soul`
+- `poisonId`
+- `poisonCount`
 
 ## isPapyrusHotReloadEnabled
 
@@ -265,19 +534,48 @@ A boolean setting that enables to turn on or turn off hot reload for compiled Pa
 ```json5
 {
   // ...
-  "isPapyrusHotReloadEnabled": false
+  isPapyrusHotReloadEnabled: false,
   // ...
 }
 ```
 
 ## locale
 
-The name of a localizaiton file in `data/localization` that would be used by `M.GetText` Papyrus function (without extension).
+The name of a localization file in `data/localization` that would be used by `M.GetText` Papyrus function (without extension).
 
 ```json5
 {
   // ...
-  "locale": "ru-RU"
+  locale: 'ru-RU',
+  // ...
+}
+```
+
+## localeRouting
+
+Controls frontend language routing based on country code (used by admin/client locale resolution routes).
+
+- `defaultLanguage`: fallback language when no mapping matches.
+- `countryCodeToLanguage`: map of ISO country codes to language codes.
+
+If omitted or invalid, safe defaults are applied (`defaultLanguage: "en"` and built-in mappings for `de`, `en`, `es`, `ru`).
+
+```json5
+{
+  // ...
+  localeRouting: {
+    defaultLanguage: 'en',
+    countryCodeToLanguage: {
+      DE: 'de',
+      AT: 'de',
+      CH: 'de',
+      US: 'en',
+      GB: 'en',
+      ES: 'es',
+      MX: 'es',
+      RU: 'ru',
+    },
+  },
   // ...
 }
 ```
@@ -289,7 +587,7 @@ Enable console commands for all, useful for testing.
 ```json5
 {
   // ...
-  "enableConsoleCommandsForAll": true
+  enableConsoleCommandsForAll: true,
   // ...
 }
 ```
@@ -301,7 +599,7 @@ The minimal amount of players to begin deathmatch. This setting is sweetpie only
 ```json5
 {
   // ...
-  "sweetPieMinimumPlayersToStart": 5
+  sweetPieMinimumPlayersToStart: 5,
   // ...
 }
 ```
@@ -313,7 +611,7 @@ Prevents the gamemode from disabling cheats. This setting is sweetpie only and d
 ```json5
 {
   // ...
-  "sweetPieAllowCheats": true
+  sweetPieAllowCheats: true,
   // ...
 }
 ```
@@ -325,9 +623,9 @@ Allows tuning settings related to in-game chat, such as message visibility radiu
 ```json5
 {
   // ...
-  "sweetPieChatSettings": {
+  sweetPieChatSettings: {
     // Hearing distance in units. If player A says something and player B is farther away, they won't see that message.
-    "hearingRadiusNormal": 123,
+    hearingRadiusNormal: 123,
   },
   // ...
 }
@@ -350,7 +648,7 @@ Enables npc loading. Default is false.
 ```json5
 {
   // ...
-  "npcEnabled": false,
+  npcEnabled: false,
   // ...
 }
 ```
@@ -361,29 +659,51 @@ Optional npcs configuration. May not be present or can be an empty object which 
 `"NpcSettings"` consists of fields, each of which describes from what game file it is permitted to load an npc and additional restrictions of
 how they should be spawned: in interior or exterior. By default all the npcs are allowed (`"npcSettings": {}`).
 `"default":{}` field specifies `"spawnInInterior"` and `"spawnInExterior"` for all non-mentioned game files.
+Optional class filters are also supported:
+
+- `allowHumanoid` (default `true`) - allow/disallow humanoid NPCs (keyword `ActorTypeNPC`).
+- `allowCreature` (default `true`) - allow/disallow creatures, beasts, monsters.
 
 ```json5
 {
   // ...
-  "npcSettings": {
-    "default": {
-      "spawnInInterior": true,
-      "spawnInExterior": false
+  npcSettings: {
+    default: {
+      spawnInInterior: true,
+      spawnInExterior: false,
+      allowHumanoid: true,
+      allowCreature: true,
     },
-    "Skyrim.esm": {
-      "spawnInInterior": true,
-      "spawnInExterior": false
+    'Skyrim.esm': {
+      spawnInInterior: true,
+      spawnInExterior: false,
     },
-    "Dawnguard.esm": {
-      "spawnInInterior": false,
-      "spawnInExterior": true
+    'Dawnguard.esm': {
+      spawnInInterior: false,
+      spawnInExterior: true,
     },
-    "DragonBorn.esm": {
-      "spawnInInterior": true,
-      "spawnInExterior": true
+    'DragonBorn.esm': {
+      spawnInInterior: true,
+      spawnInExterior: true,
     },
   },
   // ...
+}
+```
+
+Example: make cities mostly empty, but keep wildlife/monsters spawnable.
+
+```json5
+{
+  npcEnabled: true,
+  npcSettings: {
+    default: {
+      spawnInInterior: true,
+      spawnInExterior: true,
+      allowHumanoid: false,
+      allowCreature: true,
+    },
+  },
 }
 ```
 
@@ -396,12 +716,12 @@ In case this field is not provided, some default, yet hardcoded, values are in u
 ```json5
 {
   // ...
-  "weaponStaminaModifiers": {
-    "WeapTypeDagger": 4.0,
-    "WeapTypeShortSword": 5.0,
-    "WeapTypeSword": 6.0,
+  weaponStaminaModifiers: {
+    WeapTypeDagger: 4.0,
+    WeapTypeShortSword: 5.0,
+    WeapTypeSword: 6.0,
     // ...
-  }
+  },
   // ...
 }
 ```
@@ -413,29 +733,30 @@ To automate the fetching of the latest server settings from GitHub, configure th
 ```json5
 {
   // ...
-  "additionalServerSettings": [
+  additionalServerSettings: [
     {
-      "type": "github",
-      "repo": "your-org/server-settings-repo",
-      "ref": "main", // Specify the branch, tag, or commit hash here
-      "pathRegex": "^(common|indev)/.*", // No need to check for .json extension
-      "token": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
-    }
-  ]
+      type: 'github',
+      repo: 'your-org/server-settings-repo',
+      ref: 'main', // Specify the branch, tag, or commit hash here
+      pathRegex: '^(common|indev)/.*', // No need to check for .json extension
+      token: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN',
+    },
+  ],
   // ...
 }
 ```
 
 ## damageMultFormulaSettings
+
 This setting allows you to control server damage mult formula through its variables.
 If "damageMultFormulaSettings" is not present, the server will use some default values.
 
 ```json5
 {
   // ...
-  "damageMultFormulaSettings": {
-    "multiplier": 1.0
-  }
+  damageMultFormulaSettings: {
+    multiplier: 1.0,
+  },
   // ...
 }
 ```
@@ -444,12 +765,37 @@ If "damageMultFormulaSettings" is not present, the server will use some default 
 
 A boolean setting that controls hot-reloading behavior for connected clients.
 
-* `false` (Default): Updates to gamemode scripts are applied to the server state but **not** broadcast to currently connected players. Existing players must re-login to receive the update. This ensures client stability if scripts do not support hot-reloading.
-* `true`: Updates are immediately broadcast to all connected clients. Useful for local development, but may cause desync or client errors if the scripts are not designed to be re-applied at runtime.
+- `false` (Default): Updates to gamemode scripts are applied to the server state but **not** broadcast to currently connected players. Existing players must re-login to receive the update. This ensures client stability if scripts do not support hot-reloading.
+- `true`: Updates are immediately broadcast to all connected clients. Useful for local development, but may cause desync or client errors if the scripts are not designed to be re-applied at runtime.
 
 ```json5
 {
   // ...
-  "enableGamemodeDataUpdatesBroadcast": false
+  enableGamemodeDataUpdatesBroadcast: false,
   // ...
 }
+```
+
+## supervisor
+
+Supervisor process control used by Admin dashboard server actions.
+
+- `enabled`: turns supervisor control on/off.
+- `stopCommand`: command executed for stop action.
+- `restartCommand`: command executed for restart action.
+
+Admin dashboard stop/restart buttons are only enabled when supervisor is configured and available.
+
+```json5
+{
+  // ...
+  supervisor: {
+    enabled: true,
+    stopCommand: '/opt/skymp/misc/systemd/skymp-supervisorctl.sh stop',
+    restartCommand: '/opt/skymp/misc/systemd/skymp-supervisorctl.sh restart',
+  },
+  // ...
+}
+```
+
+For Ubuntu 24.04 deployment examples, see [docs_running_a_server.md](docs_running_a_server.md).

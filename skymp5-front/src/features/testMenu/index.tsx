@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { FrameButton } from '../../components/FrameButton/FrameButton';
-import content, { levels } from './content';
-import './styles.scss';
+import { SkyrimFrame } from '../../components/SkyrimFrame/SkyrimFrame';
 import { SkyrimHint } from '../../components/SkyrimHint/SkyrimHint';
+import './styles.scss';
+
 //import hoverSound from './assets/OnCoursor.wav';
 //import quitSound from './assets/Quit.wav';
 //import selectSound from './assets/ButtonDown.wav';
 //import learnSound from './assets/LearnSkill.wav';
-import { IPlayerData } from '../../interfaces/skillMenu';
 
 const TestMenu = ({ send }: { send: (message: string) => void }) => {
-  const [currentHeader, setcurrentHeader] = useState('способности');
-  const [currentLevel, setcurrentLevel] = useState(' ');
-  const [currentDescription, setcurrentDescription] = useState(' ');
+  const { t } = useTranslation();
+  const [currentHeader, setcurrentHeader] = useState('');
+  const [currentLevel, setcurrentLevel] = useState('');
+  const [currentDescription, setcurrentDescription] = useState('');
   const [selectedPerk, setselectedPerk] = useState(null);
   const [scale, setscale] = useState(1);
   const [pExp, setpExp] = useState(0);
@@ -87,11 +89,7 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
     if (!playerData) return;
     setpExp(1);
     setpMem(1);
-    setscale(
-      window.innerWidth >= 1920
-        ? 1
-        : window.innerWidth / 2500
-    );
+    setscale(window.innerWidth >= 1920 ? 1 : window.innerWidth / 2500);
   }, [playerData]);
 
   if (!playerData) return <></>;
@@ -101,7 +99,7 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
       <div className="perks" style={{ transform: `scale(${scale})` }}>
         <div className="perks__content">
           <div className="perks__header">
-            <span>{currentHeader}</span>
+            <span>{currentHeader || t('skillsMenu.header')}</span>
             <div
               className="perks__exp-container__line"
               onMouseEnter={() => setmemHint(true)}
@@ -109,11 +107,11 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
             >
               <SkyrimHint
                 active="true"
-                text={'память нужна для изучения новых способностей'}
+                text={t('skillsMenu.memoryHint')}
                 isOpened={memHint}
                 left={true}
               />
-              <span>память:</span>
+              <span>{t('skillsMenu.memory')}</span>
               <span className="perks__exp-container__line__price">
                 {pMem}
                 <span className="perks__exp" style={{ opacity: 0 }} />
@@ -138,12 +136,12 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
                     onMouseLeave={() => setexpHint(false)}
                   >
                     <SkyrimHint
-                      text={'за опыт можно улучшить способности'}
+                      text={t('skillsMenu.experienceHint')}
                       isOpened={expHint}
                       active="true"
                       left={true}
                     />
-                    <span>опыт:</span>
+                    <span>{t('skillsMenu.experience')}</span>
                     <span className="perks__exp-container__line__price">
                       {pExp}
                       <span className="perks__exp" />
@@ -151,24 +149,23 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
                   </div>
                 </div>
                 <FrameButton
-                  text="изучить"
+                  text={t('skillsMenu.learn')}
                   name="learnBtn"
                   variant="DEFAULT"
                   width={242}
                   height={56}
                 ></FrameButton>
-                {confirmDiscard
-                  ? (
+                {confirmDiscard ? (
                   <div className="perks__footer__buttons__confirm">
                     <FrameButton
-                      text="да"
+                      text={t('skillsMenu.yes')}
                       name="yesBtn"
                       variant="DEFAULT"
                       width={178}
                       height={56}
                     ></FrameButton>
                     <FrameButton
-                      text="нет"
+                      text={t('skillsMenu.no')}
                       name="noBtn"
                       variant="DEFAULT"
                       width={178}
@@ -176,22 +173,21 @@ const TestMenu = ({ send }: { send: (message: string) => void }) => {
                       onMouseDown={() => setconfirmDiscard(false)}
                     ></FrameButton>
                   </div>
-                    )
-                  : (
+                ) : (
                   <FrameButton
-                    text="сбросить все"
+                    text={t('skillsMenu.reset')}
                     name="discardBtn"
                     variant="DEFAULT"
                     width={242}
                     height={56}
                     // disabled={Object.keys(playerData.perks).length === 0}
                   ></FrameButton>
-                    )}
+                )}
               </div>
               <div className="perks__footer__exit-button">
                 <FrameButton
                   name="extBtn"
-                  text="выйти"
+                  text={t('skillsMenu.exit')}
                   variant="DEFAULT"
                   width={242}
                   height={56}

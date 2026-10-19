@@ -1,6 +1,6 @@
 const defaultState = {
   isBrowserFocus: false,
-}
+};
 
 export const appReducer = (state = defaultState, action) => {
   switch (action.type) {
@@ -8,9 +8,9 @@ export const appReducer = (state = defaultState, action) => {
       return {
         ...state,
         isBrowserFocus: action.data,
-      }
+      };
     }
   }
 
-  return state
-}
+  return state;
+};

@@ -1,15 +1,18 @@
-import { Actor } from "skyrimPlatform";
-import { ApplyDeathStateEvent } from "../events/applyDeathStateEvent";
-import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { RespawnNeededError } from "../../lib/errors";
-import { AnimationEventName } from "../../sync/animation";
-import { RagdollService } from "./ragdollService";
+import { Actor } from 'skyrimPlatform';
+
+import { RespawnNeededError } from '../../lib/errors';
+import { AnimationEventName } from '../../sync/animation';
+import { ApplyDeathStateEvent } from '../events/applyDeathStateEvent';
+import { ClientListener, CombinedController, Sp } from './clientListener';
+import { RagdollService } from './ragdollService';
 
 export class DeathService extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
-    controller.once("update", () => this.onceUpdate());
-    controller.emitter.on("applyDeathStateEvent", (e) => this.onApplyDeathState(e));
+    controller.once('update', () => this.onceUpdate());
+    controller.emitter.on('applyDeathStateEvent', (e) =>
+      this.onApplyDeathState(e),
+    );
     this.hookDisableKillMoves();
     this.hookDisableStagger();
     this.hookDisableBlockedAnims();
@@ -32,13 +35,13 @@ export class DeathService extends ClientListener {
     this.sp.hooks.sendAnimationEvent.add(
       {
         enter(ctx) {
-          ctx.animEventName = "";
+          ctx.animEventName = '';
         },
-        leave() { },
+        leave() {},
       },
       0xff000000,
       0xffffffff,
-      "KillMove*"
+      'KillMove*',
     );
   }
 
@@ -46,13 +49,13 @@ export class DeathService extends ClientListener {
     this.sp.hooks.sendAnimationEvent.add(
       {
         enter(ctx) {
-          ctx.animEventName = "";
+          ctx.animEventName = '';
         },
-        leave() { },
+        leave() {},
       },
       0xff000000,
       0xffffffff,
-      "staggerStart"
+      'staggerStart',
     );
   }
 
@@ -64,13 +67,13 @@ export class DeathService extends ClientListener {
             return;
           }
           if (!this.allowedPlayerAnimations.includes(ctx.animEventName)) {
-            ctx.animEventName = "";
+            ctx.animEventName = '';
           }
         },
-        leave() { },
+        leave() {},
       },
       this.playerActorId,
-      this.playerActorId
+      this.playerActorId,
     );
   }
 
@@ -108,7 +111,7 @@ export class DeathService extends ClientListener {
       actor.setDontMove(false);
       this.ressurectWithPushKill(actor);
     } else {
-      throw new RespawnNeededError("needs to be respawned");
+      throw new RespawnNeededError('needs to be respawned');
     }
   };
 
@@ -127,7 +130,7 @@ export class DeathService extends ClientListener {
       }
       // TODO: should use actor variable instead of getPlayer?
       // TODO: use different iGetUpType if ressurecting under water
-      this.sp.Game.getPlayer()!.setAnimationVariableInt("iGetUpType", 1);
+      this.sp.Game.getPlayer()!.setAnimationVariableInt('iGetUpType', 1);
       this.sp.Debug.sendAnimationEvent(actor, AnimationEventName.GetUpBegin);
     });
   };

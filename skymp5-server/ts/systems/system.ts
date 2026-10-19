@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { EventEmitter } from 'events';
 
-import { EventEmitter } from "events";
-import { ScampServer } from "../scampNative";
+import { ScampServer } from '../scampNative';
 
 export interface SystemContext {
   svr: ScampServer;
@@ -18,7 +18,7 @@ export interface System {
     userId: number,
     type: string,
     content: Content,
-    ctx: SystemContext
+    ctx: SystemContext,
   ) => void;
 }
 

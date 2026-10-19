@@ -12,6 +12,7 @@ TEST_CASE("MS13BanditCampfire01 in BleakFalls should have inventory/equipment "
 {
   PartOne& p = GetPartOne();
   p.worldState.npcSettings["Skyrim.esm"].spawnInInterior = true;
+  p.worldState.npcSettings["Skyrim.esm"].overriden = true;
   p.worldState.npcEnabled = true;
   uint32_t actorId = 0x39fe4;
   auto& bandit = p.worldState.GetFormAt<MpActor>(actorId);

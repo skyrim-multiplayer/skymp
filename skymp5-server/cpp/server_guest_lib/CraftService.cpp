@@ -88,9 +88,6 @@ bool CraftService::RecipeItemsMatch(const espm::LookupResult& lookupRes,
   };
   const bool isTemper = recipeData.benchKeywordId == ArmorTable ||
     recipeData.benchKeywordId == SharpeningWheel;
-  if (isTemper) {
-    return false;
-  }
 
   auto thisInputObjects = recipeData.inputObjects;
   for (auto& entry : thisInputObjects) {
@@ -211,6 +208,61 @@ void CraftService::UseCraftRecipe(MpActor* me, const espm::COBJ* recipeUsed,
 
   auto outputFormId =
     espm::utils::GetMappedId(recipeData.outputObjectFormId, *mapping);
+
+  enum
+  {
+    ArmorTable = 0xadb78,
+    SharpeningWheel = 0x88108
+  };
+  const bool isTemper = recipeData.benchKeywordId == ArmorTable ||
+    recipeData.benchKeywordId == SharpeningWheel;
+
+  if (isTemper) {
+    // Find the item being tempered in the actor's actual inventory so we can
+    // preserve its ExtraData (enchantment, custom name, etc.)
+    const auto& invEntries = me->GetInventory().entries;
+    auto it = std::find_if(
+      invEntries.begin(), invEntries.end(),
+      [&](const Inventory::Entry& e) { return e.baseId == outputFormId; });
+
+    if (it == invEntries.end()) {
+      return spdlog::error(
+        "Temper failed: item {:#x} not found in actor {:#x} inventory",
+        outputFormId, me->GetFormId());
+    }
+
+    // Build the upgraded entry: same ExtraData, but health (= temper level) +1
+    Inventory::Entry upgradedEntry = *it;
+    upgradedEntry.count = 1;
+    upgradedEntry.health = upgradedEntry.health.value_or(0.0f) + 1.0f;
+
+    // Separate materials (COBJ inputs that are not the item being tempered)
+    std::vector<Inventory::Entry> materialEntries;
+    for (const auto& e : entries) {
+      if (e.baseId != outputFormId) {
+        materialEntries.push_back(e);
+      }
+    }
+
+    spdlog::info(
+      "User formId={:#x} tempers {:#x} to health level {:.1f}",
+      me->GetFormId(), outputFormId, upgradedEntry.health.value());
+
+    // Remove the required materials
+    if (!materialEntries.empty()) {
+      me->RemoveItems(materialEntries);
+    }
+
+    // Remove exactly one copy of the item being tempered (matched by full
+    // ExtraData so enchanted/named items are handled correctly)
+    Inventory::Entry toRemove = *it;
+    toRemove.count = 1;
+    me->RemoveItems({ toRemove });
+
+    // Add back the upgraded item
+    me->AddItems({ upgradedEntry });
+    return;
+  }
 
   if (spdlog::should_log(spdlog::level::info)) {
     std::string s = fmt::format("User formId={:#x} crafted", me->GetFormId());

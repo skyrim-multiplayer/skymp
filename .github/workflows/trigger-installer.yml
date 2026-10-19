@@ -1,0 +1,63 @@
+name: Trigger Installer
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      INSTALLER_REPOSITORY: ${{ vars.INSTALLER_REPOSITORY || '' }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # Adding FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 to the env block
+    steps:
+      - name: Validate installer repository variable
+        run: |
+          if [ -z "$INSTALLER_REPOSITORY" ]; then
+            echo "::error::Repository variable INSTALLER_REPOSITORY is not set. Use format owner/repo.";
+            exit 1
+          fi
+
+      - name: Validate dispatch token and repo access
+        env:
+          DISPATCH_PAT: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+        run: |
+          if [ -z "$DISPATCH_PAT" ]; then
+            echo "::error::Secret SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT is empty or missing."
+            exit 1
+          fi
+
+          status=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $DISPATCH_PAT" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$INSTALLER_REPOSITORY")
+
+          if [ "$status" = "401" ]; then
+            echo "::error::Bad credentials for SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT (401). Refresh PAT and ensure it has access to $INSTALLER_REPOSITORY."
+            exit 1
+          fi
+
+          if [ "$status" = "404" ]; then
+            echo "::error::Repository '$INSTALLER_REPOSITORY' was not found for this token (404). Check INSTALLER_REPOSITORY and PAT access."
+            exit 1
+          fi
+
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Unable to access '$INSTALLER_REPOSITORY' with dispatch token. HTTP status: $status"
+            exit 1
+          fi
+
+      - name: Repository dispatch
+        uses: peter-evans/repository-dispatch@v4.0.1
+        with:
+          token: ${{ secrets.SKYMP5_INSTALLER_REPOSITORY_DISPATCH_PAT }}
+          repository: ${{ env.INSTALLER_REPOSITORY }}
+          event-type: 'on-skymp-push'
+          client-payload: |
+            {
+              "ref": "refs/heads/main",
+              "inputs": {}
+            }

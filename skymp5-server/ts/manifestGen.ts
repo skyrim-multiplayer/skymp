@@ -1,7 +1,8 @@
-import { Settings } from "./settings";
-import * as crc32 from "crc-32";
-import * as path from "path";
-import * as fs from "fs";
+import * as crc32 from 'crc-32';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { Settings } from './settings';
 
 interface ManifestModEntry {
   filename: string;
@@ -16,18 +17,22 @@ interface Manifest {
 }
 
 const getBsaNameByEspmName = (espmName: string) => {
-  if (espmName.endsWith(".esp") || espmName.endsWith(".esm")) {
-    const nameNoExt = espmName.split(".").slice(0, -1).join(".");
-    return nameNoExt + ".bsa";
+  if (
+    espmName.endsWith('.esp') ||
+    espmName.endsWith('.esm') ||
+    espmName.endsWith('.esl')
+  ) {
+    const nameNoExt = espmName.split('.').slice(0, -1).join('.');
+    return nameNoExt + '.bsa';
   }
-  throw new Error(`'${espmName}' is not a valid esp or esm name`);
+  throw new Error(`'${espmName}' is not a valid esp, esm, or esl name`);
 };
 
 export const generateManifest = (settings: Settings): void => {
   const manifest: Manifest = {
     mods: [],
     versionMajor: 1,
-    loadOrder: settings.loadOrder.map(x => path.basename(x)),
+    loadOrder: settings.loadOrder.map((x) => path.basename(x)),
   };
 
   settings.loadOrder.forEach((loadOrderElement) => {
@@ -38,6 +43,14 @@ export const generateManifest = (settings: Settings): void => {
     const espmPath = path.isAbsolute(loadOrderElement)
       ? loadOrderElement
       : path.join(settings.dataDir, espmName);
+
+    if (!fs.existsSync(espmPath)) {
+      console.warn(
+        `[manifestGen] Skipping missing file: ${espmPath}` +
+        ` (check that 'dataDir' in server-settings.json points to your Skyrim Data folder)`,
+      );
+      return;
+    }
 
     const buf: Uint8Array = fs.readFileSync(espmPath);
     manifest.mods.push({
@@ -58,6 +71,6 @@ export const generateManifest = (settings: Settings): void => {
     }
   });
 
-  const manifestPath = path.join(settings.dataDir, "manifest.json");
+  const manifestPath = path.join(settings.dataDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4));
 };

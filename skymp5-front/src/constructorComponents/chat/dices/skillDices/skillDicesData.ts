@@ -333,7 +333,7 @@ export const weapons = {
     </svg>
     `
   }
-} as {[key:string]: {icon: string, index?: number}};
+} as { [key: string]: { icon: string; index?: number } };
 
 export const rollButtons = {
   initiative: `<svg

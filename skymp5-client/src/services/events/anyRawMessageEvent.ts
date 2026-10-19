@@ -1,3 +1,3 @@
 export interface AnyRawMessageEvent {
-    rawContent: ArrayBuffer;
+  rawContent: ArrayBuffer;
 }

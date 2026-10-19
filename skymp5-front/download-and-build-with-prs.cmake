@@ -1,5 +1,3 @@
-include(${CMAKE_SOURCE_DIR}/cmake/yarn.cmake)
-
 message(STATUS "Downloading frontend sources")
 
 # Download the repository using Git
@@ -50,14 +48,21 @@ else()
     message(FATAL_ERROR "Failed to run Pospelove/auto-merge-action@main: ${NODE_OUTPUT}")
 endif()
 
-message(STATUS "Installing yarn dependencies for frontend")
+message(STATUS "Installing npm dependencies for frontend")
 
-yarn_execute_command(
+execute_process(
+    COMMAND npm ci
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/frontend-sources
-    COMMAND install
+    RESULT_VARIABLE NPM_INSTALL_RESULT
+    OUTPUT_VARIABLE NPM_INSTALL_OUTPUT
+    ERROR_VARIABLE NPM_INSTALL_ERROR
 )
 
-message(STATUS "Installed yarn dependencies for frontend")
+if(NPM_INSTALL_RESULT EQUAL 0)
+    message(STATUS "Installed npm dependencies for frontend")
+else()
+    message(FATAL_ERROR "Failed to install frontend dependencies via npm ci: ${NPM_INSTALL_OUTPUT}\n${NPM_INSTALL_ERROR}")
+endif()
 
 message(STATUS "Writing config.js for frontend")
 
@@ -69,9 +74,16 @@ file(APPEND "${CMAKE_BINARY_DIR}/frontend-sources/config.js" "};\n")
 
 message(STATUS "Building frontend")
 
-yarn_execute_command(
+execute_process(
+    COMMAND npm run build
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/frontend-sources
-    COMMAND build
+    RESULT_VARIABLE NPM_BUILD_RESULT
+    OUTPUT_VARIABLE NPM_BUILD_OUTPUT
+    ERROR_VARIABLE NPM_BUILD_ERROR
 )
 
-message(STATUS "Built frontend")
+if(NPM_BUILD_RESULT EQUAL 0)
+    message(STATUS "Built frontend")
+else()
+    message(FATAL_ERROR "Failed to build frontend via npm run build: ${NPM_BUILD_OUTPUT}\n${NPM_BUILD_ERROR}")
+endif()

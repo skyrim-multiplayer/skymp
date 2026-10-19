@@ -76,6 +76,7 @@ export interface Browser {
   setFocused(focused: boolean): void
   isFocused(): boolean
   loadUrl(url: string): void
+  getToken(): string
   executeJavaScript(src: string): void
 }
 export declare let browser: Browser
@@ -511,6 +512,7 @@ export interface LocationDiscoveryEvent {
   isVisible: boolean
   canTravelTo: boolean
   isShowAllHidden: boolean
+  markerFormId: number
 }
 
 export interface ShoutAttackEvent {
@@ -1627,6 +1629,7 @@ export declare function getAnimationVariablesFromActor(actorFormId: number): Act
 export declare function applyAnimationVariablesToActor(actorFormId: number, animationVariables: ActorAnimationVariables): boolean;
 
 export declare function setCollision(refrFormId: number, collision: boolean): void;
+export declare function showMapMarker(refrFormId: number, show: boolean): void;
 
 // Based on Form.pex
 export declare class Form extends PapyrusObject {
@@ -1765,6 +1768,7 @@ export declare class ObjectReference extends Form {
   addDependentAnimatedObjectReference(akDependent: ObjectReference | null): boolean
   addInventoryEventFilter(akFilter: Form | null): void
   addItem(akItemToAdd: Form | null, aiCount: number, abSilent: boolean): void
+  addItem(akItemToAdd: ObjectReference | null, aiCount: number, abSilent: boolean): void
   addToMap(abAllowFastTravel: boolean): void
   applyHavokImpulse(afX: number, afY: number, afZ: number, afMagnitude: number): Promise<void>
   blockActivation(abBlocked: boolean): void
@@ -2115,6 +2119,7 @@ export declare class Actor extends ObjectReference {
   updateWeight(neckDelta: number): void
   willIntimidateSucceed(): boolean
   wornHasKeyword(akKeyword: Keyword | null): boolean
+  addToFaction(akFaction: Faction | null, aiStartingRank?: number): void
 }
 
 // Based on ActorBase.pex

@@ -8,7 +8,7 @@ const definitionsPath = path.join(root, 'skyrim-platform/src/platform_se/codegen
 const outputPath = path.join(root, 'skyrim-platform/src/platform_se/codegen/convert-files/skyrimPlatform.ts');
 
 const j = JSON.parse(fs.readFileSync(functionsDumpPath, 'utf8'));
-const definitions = fs.readFileSync(definitionsPath, 'utf8');
+const definitions = fs.readFileSync(definitionsPath, 'utf8').replace(/\r\n/g, '\n');
 
 const ignored = new Set(['TESModPlatform.Add', 'Math', 'MpClientPlugin']);
 const functionNameOverrides = { getplayer: 'getPlayer' };
@@ -58,7 +58,11 @@ function dumpFunction(className, f, isGlobal) {
   let returnType = parseReturnValue(f.returnType.rawType, f.returnType.objectTypeName || '');
   if (f.isLatent && !isAddOrRemove) returnType = `Promise<${returnType}>`;
 
-  return `  ${isGlobal ? 'static ' : ''}${prettyName}(${args.join(', ')}): ${returnType}\n`;
+  let declaration = `  ${isGlobal ? 'static ' : ''}${prettyName}(${args.join(', ')}): ${returnType}\n`;
+  if (className === 'ObjectReference' && funcName === 'additem' && !isGlobal) {
+    declaration += '  addItem(akItemToAdd: ObjectReference | null, aiCount: number, abSilent: boolean): void\n';
+  }
+  return declaration;
 }
 
 function dumpType(data) {
@@ -77,6 +81,9 @@ function dumpType(data) {
   out += `export declare class ${prettyName} extends ${prettyParent} {\n`;
   out += `  static from(papyrusObject: PapyrusObject | null): ${prettyName} | null\n`;
   for (const f of data.memberFunctions) out += dumpFunction(data.name, f, false);
+  if (data.name === 'Actor' && !data.memberFunctions.some(f => f.name.toLowerCase() === 'addtofaction')) {
+    out += '  addToFaction(akFaction: Faction | null, aiStartingRank?: number): void\n';
+  }
   for (const f of data.globalFunctions) out += dumpFunction(data.name, f, true);
   out += '}\n';
 

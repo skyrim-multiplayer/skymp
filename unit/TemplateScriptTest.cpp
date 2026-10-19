@@ -33,6 +33,7 @@ TEST_CASE("MS13FrostbiteSpiderREF in BleakFalls should have scripts "
   PartOne& p = GetPartOne();
 
   p.worldState.npcSettings["Skyrim.esm"].spawnInInterior = true;
+  p.worldState.npcSettings["Skyrim.esm"].overriden = true;
   p.worldState.npcEnabled = true;
 
   p.worldState.AttachScriptStorage(std::make_shared<MyScriptStorage>());

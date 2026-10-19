@@ -20,11 +20,10 @@ In general why is it good:
 - **Hotreload.** SP watches plugins by default. Ctrl+S, Alt+Tab, and you can test your changes in-game.
 - **IDE support.** You'll see many errors compile-time.
 - **Promises and async/await support.** Supported for async Papyrus functions like `Utility.wait`, `ObjectReference.setPosition`, etc.
-- **Safety.** SP protects you from null pointers, threadding issues, etc. 
+- **Safety.** SP protects you from null pointers, threadding issues, etc.
 - **SKSE compatibility.** You can call 3rd party SKSE functions natively from JS/TS.
 - **Mod managers support.** Nothing goes to Skyrim root.
 - **Chromium Embedded Framework.** You can build ingame UI in React, VueJS, etc.
-
 
 Some Drawbacks:
 
@@ -37,9 +36,11 @@ Some Drawbacks:
 You'll love Skyrim Platform, especially if you're:
 
 ### ...a JavaScript Developer with No Modding Background
+
 Your favorite tech stack is now available for Skyrim modding.
 
 ### ...a person with ADHD
+
 The hot-reload feature lets you prototype and iterate rapidly with an extremely short feedback loop. It's incredibly fast compared to Papyrus/C++ development.
 
 Skyrim Platform is an excellent starting point for Skyrim programming. If desired, you can transition to C++ later, as many people do.

@@ -1,44 +1,44 @@
 .promoted-input-checkbox {
-    border: 0;
-    clip: rect(0 0 0 0);
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    padding: 0;
-    position: absolute;
-    width: 1px;
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
 }
 
 .promoted-checkbox {
-    margin-right: 20px;
-    margin-left: 2px;
-    input:checked+label>img {
-        // Firefox doesn't render svg's that is loading with the use tag if its been set to display: none and then toggled to display: block, so you have to use tricks like this to get it to render again:
-        height: 24px;
+  margin-right: 20px;
+  margin-left: 2px;
+  input:checked + label > img {
+    // Firefox doesn't render svg's that is loading with the use tag if its been set to display: none and then toggled to display: block, so you have to use tricks like this to get it to render again:
+    height: 24px;
+  }
+
+  label {
+    line-height: 40px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+
+    span {
+      margin: auto 10px;
     }
 
-    label {
-        line-height: 40px;
-        cursor: pointer;
-        position: relative;
-        display: flex;
-        flex-direction: row;
-
-        span {
-            margin: auto 10px;
-        }
-
-        &:after {
-            content: "";
-            float: left;
-            border-radius: 3px;
-            transition: 0.15s all ease-out;
-        }
+    &:after {
+      content: '';
+      float: left;
+      border-radius: 3px;
+      transition: 0.15s all ease-out;
     }
+  }
 
-    img {
-        width: 24px;
-        height: 24px;
-        margin: auto 0;
-    }
+  img {
+    width: 24px;
+    height: 24px;
+    margin: auto 0;
+  }
 }

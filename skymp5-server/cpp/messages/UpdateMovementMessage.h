@@ -29,6 +29,8 @@ struct UpdateMovementMessage : public MessageBase<UpdateMovementMessage>
         .Serialize("speed", speed)
         .Serialize("runMode", runMode)
         .Serialize("isInJumpState", isInJumpState)
+        .Serialize("isMounted", isMounted)
+        .Serialize("mountRemoteId", mountRemoteId)
         .Serialize("isSneaking", isSneaking)
         .Serialize("isBlocking", isBlocking)
         .Serialize("isWeapDrawn", isWeapDrawn)
@@ -46,6 +48,8 @@ struct UpdateMovementMessage : public MessageBase<UpdateMovementMessage>
     // flags & optionals
     std::string runMode = "Standing";
     bool isInJumpState = false;
+    bool isMounted = false;
+    std::optional<uint32_t> mountRemoteId = std::nullopt;
     bool isSneaking = false;
     bool isBlocking = false;
     bool isWeapDrawn = false;

@@ -71,6 +71,84 @@ TEST_CASE("DamageActorValue", "[Papyrus][Actor][espm]")
   DoDisconnect(p, 0);
 }
 
+TEST_CASE("SetActorValue", "[Papyrus][Actor][espm]")
+{
+  PapyrusActor papyrusActor;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  papyrusActor.SetActorValue(actor.ToVarValue(),
+                             { VarValue("health"), VarValue(123.f) });
+  papyrusActor.SetActorValue(actor.ToVarValue(),
+                             { VarValue("StaminaRate"), VarValue(8.f) });
+  papyrusActor.SetActorValue(
+    actor.ToVarValue(),
+    { VarValue("magickaRateMult"), VarValue(137.f) });
+
+  MpChangeForm changeForm = actor.GetChangeForm();
+
+  REQUIRE(changeForm.actorValues.health == 123.f);
+  REQUIRE(changeForm.actorValues.staminaRate == 8.f);
+  REQUIRE(changeForm.actorValues.magickaRateMult == 137.f);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
+TEST_CASE("SetActorValue with unknown name does not crash",
+          "[Papyrus][Actor][espm]")
+{
+  PapyrusActor papyrusActor;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  // Unknown AV name should fall back to SpSnippet without crashing
+  REQUIRE_NOTHROW(papyrusActor.SetActorValue(
+    actor.ToVarValue(),
+    { VarValue("unknownActorValue"), VarValue(42.f) }));
+
+  // Known values should be unaffected
+  MpChangeForm changeForm = actor.GetChangeForm();
+  REQUIRE(changeForm.actorValues.health == Catch::Approx(100.f));
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
+TEST_CASE("RestoreActorValue and DamageActorValue ignore rate AVs",
+          "[Papyrus][Actor]")
+{
+  PapyrusActor papyrusActor;
+
+  PartOne& p = GetPartOne();
+  DoConnect(p, 0);
+  p.CreateActor(0xff000000, { 0, 0, 0 }, 0, 0x3c);
+  p.SetUserActor(0, 0xff000000);
+  auto& actor = p.worldState.GetFormAt<MpActor>(0xff000000);
+
+  const float originalHealRate = actor.GetChangeForm().actorValues.healRate;
+
+  // Rate AVs are not percentages; these calls should be no-ops
+  REQUIRE_NOTHROW(papyrusActor.RestoreActorValue(
+    actor.ToVarValue(), { VarValue("healRate"), VarValue(50.f) }));
+  REQUIRE_NOTHROW(papyrusActor.DamageActorValue(
+    actor.ToVarValue(), { VarValue("staminaRate"), VarValue(10.f) }));
+
+  MpChangeForm changeForm = actor.GetChangeForm();
+  REQUIRE(changeForm.actorValues.healRate == originalHealRate);
+
+  p.DestroyActor(0xff000000);
+  DoDisconnect(p, 0);
+}
+
 TEST_CASE("IsDead()", "[Papyrus][Actor]")
 {
   PapyrusActor papyrusActor;

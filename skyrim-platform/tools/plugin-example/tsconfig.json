@@ -1,18 +1,22 @@
 {
   "verbose": true,
+  "ignoreDeprecations": "6.0",
   "compilerOptions": {
-    "target": "es5",
-    "module": "es2015",
+    "ignoreDeprecations": "6.0",
+    "target": "es2020",
+    "module": "nodenext",
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
     "lib": ["esnext"],
-    "paths": { "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"] },
+    "paths": {
+      "skyrimPlatform": ["node_modules/@skyrim-platform/skyrim-platform"]
+    },
+    "rootDir": "src",
     "outDir": "dist"
   },
   "include": ["src/**/*.ts"]

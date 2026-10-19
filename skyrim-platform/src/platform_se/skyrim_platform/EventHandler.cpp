@@ -5,6 +5,9 @@
 #include "SkyrimPlatform.h"
 #include "TickHandler.h"
 
+#include <RE/E/ExtraMapMarker.h>
+#include <RE/T/TES.h>
+
 namespace {
 inline void SendEvent(const char* eventName)
 {
@@ -2349,9 +2352,22 @@ EventResult EventHandler::ProcessEvent(
   bool isShowAllHidden =
     event->mapMarkerData->flags.any(RE::MapMarkerData::Flag::kShowAllHidden);
 
+  uint32_t markerFormId = 0;
+  RE::TES::GetSingleton()->ForEachReference([&](RE::TESObjectREFR* refr) {
+    if (!refr) {
+      return RE::BSContainer::ForEachResult::kContinue;
+    }
+    auto* extra = refr->extraList.GetByType<RE::ExtraMapMarker>();
+    if (extra && extra->mapData == event->mapMarkerData) {
+      markerFormId = refr->GetFormID();
+      return RE::BSContainer::ForEachResult::kStop;
+    }
+    return RE::BSContainer::ForEachResult::kContinue;
+  });
+
   SkyrimPlatform::GetSingleton()->AddUpdateTask(
-    [worldspaceID, name, type, isVisible, canTravelTo,
-     isShowAllHidden](Napi::Env env) {
+    [worldspaceID, name, type, isVisible, canTravelTo, isShowAllHidden,
+     markerFormId](Napi::Env env) {
       auto obj = Napi::Object::New(env);
 
       AddObjProperty(&obj, "worldSpaceId", worldspaceID);
@@ -2360,6 +2376,7 @@ EventResult EventHandler::ProcessEvent(
       AddObjProperty(&obj, "isVisible", isVisible);
       AddObjProperty(&obj, "canTravelTo", canTravelTo);
       AddObjProperty(&obj, "isShowAllHidden", isShowAllHidden);
+      AddObjProperty(&obj, "markerFormId", markerFormId);
 
       SendEvent("locationDiscovery", obj);
     });

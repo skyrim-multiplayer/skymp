@@ -1,7 +1,7 @@
-import { MsgType } from "../../messages";
+import { MsgType } from '../../messages';
 
 export interface DropItemMessage {
-    t: MsgType.DropItem,
-    baseId: number,
-    count: number
+  t: MsgType.DropItem;
+  baseId: number;
+  count: number;
 }

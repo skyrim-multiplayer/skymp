@@ -222,6 +222,12 @@ void MpActor::SetRaceMenuOpen(bool isOpen)
     [&](MpChangeForm& changeForm) { changeForm.isRaceMenuOpen = isOpen; });
 }
 
+void MpActor::SetCanRespawn(bool canRespawn)
+{
+  EditChangeForm(
+    [&](MpChangeForm& changeForm) { changeForm.canRespawn = canRespawn; });
+}
+
 void MpActor::SetAppearance(const Appearance* newAppearance)
 {
   EditChangeForm([&](MpChangeForm& changeForm) {
@@ -835,6 +841,11 @@ const bool& MpActor::IsRaceMenuOpen() const
 const bool& MpActor::IsDead() const
 {
   return ChangeForm().isDead;
+}
+
+const bool& MpActor::GetCanRespawn() const
+{
+  return ChangeForm().canRespawn;
 }
 
 const bool& MpActor::IsRespawning() const

@@ -246,26 +246,104 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         "Disabling NPCs by default");
     }
 
+    if (serverSettings.find("itemsEnabled") != serverSettings.end()) {
+      if (serverSettings.at("itemsEnabled").is_boolean()) {
+        bool enabled = serverSettings.at("itemsEnabled").get<bool>();
+        partOne->worldState.itemsEnabled = enabled;
+        spdlog::info("World items are {}", enabled ? "enabled" : "disabled");
+      } else {
+        spdlog::error(
+          "Unexpected value of \"itemsEnabled\" setting, should be true or "
+          "false. Keeping default (enabled)");
+      }
+    } else {
+      spdlog::info(
+        "\"itemsEnabled\" option is not found in the server configuration "
+        "file. Enabling world items by default");
+    }
+
+    if (serverSettings.find("itemLoadFilter") != serverSettings.end() &&
+        serverSettings.at("itemLoadFilter").is_object()) {
+      const auto& filterJson = serverSettings.at("itemLoadFilter");
+
+      if (filterJson.find("skipOwned") != filterJson.end() &&
+          filterJson.at("skipOwned").is_boolean()) {
+        partOne->worldState.itemLoadFilter.skipOwned =
+          filterJson.at("skipOwned").get<bool>();
+      }
+      if (filterJson.find("skipUnowned") != filterJson.end() &&
+          filterJson.at("skipUnowned").is_boolean()) {
+        partOne->worldState.itemLoadFilter.skipUnowned =
+          filterJson.at("skipUnowned").get<bool>();
+      }
+
+      spdlog::info(
+        "itemLoadFilter: skipOwned={}, skipUnowned={}",
+        partOne->worldState.itemLoadFilter.skipOwned,
+        partOne->worldState.itemLoadFilter.skipUnowned);
+    }
+
     if (serverSettings.find("npcSettings") != serverSettings.end()) {
       if (serverSettings.at("npcSettings").is_object()) {
         std::unordered_map<std::string, WorldState::NpcSettingsEntry>
           npcSettings;
-        if (serverSettings.find("default") != serverSettings.end()) {
-          partOne->worldState.defaultSetting.spawnInInterior =
-            serverSettings.at("spawnInInterior").get<bool>();
-          partOne->worldState.defaultSetting.spawnInExterior =
-            serverSettings.at("spawnInExterior").get<bool>();
-          partOne->worldState.defaultSetting.overriden = true;
+        const auto& npcSettingsJson = serverSettings.at("npcSettings");
+        if (npcSettingsJson.find("default") != npcSettingsJson.end() &&
+            npcSettingsJson.at("default").is_object()) {
+          const auto& defaultJson = npcSettingsJson.at("default");
+
+          // Keep broad compatibility when only a subset of fields is provided.
+          partOne->worldState.defaultSetting.spawnInInterior = true;
+          partOne->worldState.defaultSetting.spawnInExterior = true;
+          partOne->worldState.defaultSetting.allowHumanoid = true;
+          partOne->worldState.defaultSetting.allowCreature = true;
+
+          if (defaultJson.find("spawnInInterior") != defaultJson.end()) {
+            partOne->worldState.defaultSetting.spawnInInterior =
+              defaultJson.at("spawnInInterior").get<bool>();
+          }
+          if (defaultJson.find("spawnInExterior") != defaultJson.end()) {
+            partOne->worldState.defaultSetting.spawnInExterior =
+              defaultJson.at("spawnInExterior").get<bool>();
+          }
+          if (defaultJson.find("allowHumanoid") != defaultJson.end()) {
+            partOne->worldState.defaultSetting.allowHumanoid =
+              defaultJson.at("allowHumanoid").get<bool>();
+          }
+          if (defaultJson.find("allowCreature") != defaultJson.end()) {
+            partOne->worldState.defaultSetting.allowCreature =
+              defaultJson.at("allowCreature").get<bool>();
+          }
+
+          partOne->worldState.defaultSetting.overriden =
+            defaultJson.find("spawnInInterior") != defaultJson.end() ||
+            defaultJson.find("spawnInExterior") != defaultJson.end();
+          partOne->worldState.defaultSetting.classOverriden =
+            defaultJson.find("allowHumanoid") != defaultJson.end() ||
+            defaultJson.find("allowCreature") != defaultJson.end();
         }
-        for (const auto& field : serverSettings["npcSettings"].items()) {
+        for (const auto& field : npcSettingsJson.items()) {
+          if (field.key() == "default") {
+            continue;
+          }
           WorldState::NpcSettingsEntry entry;
           if (field.value().find("spawnInInterior") != field.value().end()) {
             entry.spawnInInterior =
               field.value().at("spawnInInterior").get<bool>();
+            entry.overriden = true;
           }
           if (field.value().find("spawnInExterior") != field.value().end()) {
             entry.spawnInExterior =
               field.value().at("spawnInExterior").get<bool>();
+            entry.overriden = true;
+          }
+          if (field.value().find("allowHumanoid") != field.value().end()) {
+            entry.allowHumanoid = field.value().at("allowHumanoid").get<bool>();
+            entry.classOverriden = true;
+          }
+          if (field.value().find("allowCreature") != field.value().end()) {
+            entry.allowCreature = field.value().at("allowCreature").get<bool>();
+            entry.classOverriden = true;
           }
           npcSettings[field.key()] = entry;
         }
@@ -427,6 +505,19 @@ ScampServer::ScampServer(const Napi::CallbackInfo& info)
         it != serverSettings.end()) {
       bool enableBroadcast = it.value().get<bool>();
       partOne->EnableGamemodeDataUpdatesBroadcast(enableBroadcast);
+    }
+
+    if (auto it = serverSettings.find("itemPickupMode");
+        it != serverSettings.end()) {
+      std::string modeStr = it.value().get<std::string>();
+      WorldState::ItemPickupMode mode = WorldState::ItemPickupMode::Allow;
+      if (modeStr == "minigame") {
+        mode = WorldState::ItemPickupMode::Minigame;
+      } else if (modeStr == "block-all") {
+        mode = WorldState::ItemPickupMode::BlockAll;
+      }
+      partOne->worldState.SetItemPickupMode(mode);
+      logger->info("itemPickupMode set to '{}'", modeStr);
     }
 
     auto res =

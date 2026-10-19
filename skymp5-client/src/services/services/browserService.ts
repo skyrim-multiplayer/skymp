@@ -1,10 +1,15 @@
-
 // TODO: send event instead of direct dependency on FormView class
-import { FormView } from "../../view/formView";
-import { QueryKeyCodeBindings } from "../events/queryKeyCodeBindings";
+import {
+  BrowserMessageEvent,
+  DxScanCode,
+  Menu,
+  MenuCloseEvent,
+  MenuOpenEvent,
+} from 'skyrimPlatform';
 
-import { ClientListener, CombinedController, Sp } from "./clientListener";
-import { BrowserMessageEvent, DxScanCode, Menu, MenuCloseEvent, MenuOpenEvent } from "skyrimPlatform";
+import { FormView } from '../../view/formView';
+import { QueryKeyCodeBindings } from '../events/queryKeyCodeBindings';
+import { ClientListener, CombinedController, Sp } from './clientListener';
 
 const unfocusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserUnfocused', {}))`;
 const focusEventString = `window.dispatchEvent(new CustomEvent('skymp5-client:browserFocused', {}))`;
@@ -15,17 +20,21 @@ export class BrowserService extends ClientListener {
 
     this.sp.browser.setVisible(false);
 
-    this.controller.emitter.on("queryKeyCodeBindings", (e) => this.onQueryKeyCodeBindings(e));
-    this.controller.once("update", () => this.onceUpdate());
-    this.controller.on("browserMessage", (e) => this.onBrowserMessage(e));
-    this.controller.on("menuOpen", (e) => this.onMenuOpen(e));
-    this.controller.on("menuClose", (e) => this.onMenuClose(e));
+    this.controller.emitter.on('queryKeyCodeBindings', (e) =>
+      this.onQueryKeyCodeBindings(e),
+    );
+    this.controller.once('update', () => this.onceUpdate());
+    this.controller.on('browserMessage', (e) => this.onBrowserMessage(e));
+    this.controller.on('menuOpen', (e) => this.onMenuOpen(e));
+    this.controller.on('menuClose', (e) => this.onMenuClose(e));
   }
 
   // TODO: keycodes should be configurable
   private onQueryKeyCodeBindings(e: QueryKeyCodeBindings) {
     if (e.isDown([DxScanCode.F1])) {
-      FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames;
+      if (!FormView.isNicknameDisplayServerControlled) {
+        FormView.isDisplayingNicknames = !FormView.isDisplayingNicknames;
+      }
     }
     if (e.isDown([DxScanCode.F2])) {
       this.sp.browser.setVisible(!this.sp.browser.isVisible());
@@ -56,10 +65,10 @@ export class BrowserService extends ClientListener {
   }
 
   private onBrowserMessage(e: BrowserMessageEvent) {
-    const onFrontLoadedEventKey = "front-loaded";
+    const onFrontLoadedEventKey = 'front-loaded';
 
     if (e.arguments[0] === onFrontLoadedEventKey) {
-      this.controller.emitter.emit("browserWindowLoaded", {});
+      this.controller.emitter.emit('browserWindowLoaded', {});
     }
   }
 

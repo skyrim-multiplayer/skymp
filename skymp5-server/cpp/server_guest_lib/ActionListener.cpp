@@ -7,6 +7,7 @@
 #include "GetBaseActorValues.h"
 #include "HitData.h"
 #include "MathUtils.h"
+#include "AppearanceValidation.h"
 #include "MovementValidation.h"
 #include "MpObjectReference.h"
 #include "MsgType.h"
@@ -118,6 +119,20 @@ void ActionListener::OnUpdateMovement(const RawMessageData& rawMsgData,
 {
   auto actor = SendToNeighbours(msg.idx, rawMsgData);
   if (actor) {
+    auto myActor = partOne.serverState.ActorByUser(rawMsgData.userId);
+
+    // Keep a rider->horse mapping from authoritative self movement updates.
+    if (myActor && actor == myActor) {
+      const auto riderId = myActor->GetFormId();
+      if (msg.data.isMounted && msg.data.mountRemoteId.has_value() &&
+          msg.data.mountRemoteId.value() != 0) {
+        partOne.worldState.ridingHorseByRider[riderId] =
+          msg.data.mountRemoteId.value();
+      } else {
+        partOne.worldState.ridingHorseByRider.erase(riderId);
+      }
+    }
+
     bool teleportFlag = actor->GetTeleportFlag();
     actor->SetTeleportFlag(false);
 
@@ -214,12 +229,22 @@ void ActionListener::OnUpdateAppearance(const RawMessageData& rawMsgData,
     return;
   }
 
-  const bool isAllowed = actor->IsRaceMenuOpen();
+  bool isAllowed = actor->IsRaceMenuOpen();
 
   if (isAllowed) {
     actor->SetRaceMenuOpen(false);
-    actor->SetAppearance(&msg.data.value());
-    SendToNeighbours(msg.idx, rawMsgData, true);
+
+    const auto validationError =
+      AppearanceValidation::Validate(*actor->GetParent(), msg.data.value());
+    if (!validationError.empty()) {
+      spdlog::warn(
+        "OnUpdateAppearance - rejected appearance for actor {:#x}: {}",
+        actor->GetFormId(), validationError);
+      isAllowed = false;
+    } else {
+      actor->SetAppearance(&msg.data.value());
+      SendToNeighbours(msg.idx, rawMsgData, true);
+    }
   }
 
   UpdateAppearanceAttemptEvent updateAppearanceAttemptEvent(
@@ -679,7 +704,14 @@ void ActionListener::OnHostAttempt(const RawMessageData& rawMsgData,
 
   const auto hostResetTimeout = std::chrono::seconds(2);
 
-  if (hoster == 0 || !lastRemoteUpdate ||
+  bool shouldForceHost = false;
+  auto riddenHorseIt = partOne.worldState.ridingHorseByRider.find(me->GetFormId());
+  if (riddenHorseIt != partOne.worldState.ridingHorseByRider.end() &&
+      riddenHorseIt->second == remoteId) {
+    shouldForceHost = true;
+  }
+
+  if (shouldForceHost || hoster == 0 || !lastRemoteUpdate ||
       std::chrono::system_clock::now() - *lastRemoteUpdate >
         hostResetTimeout) {
     partOne.GetLogger().info("Hoster changed from {0:x} to {0:x}", prevHoster,

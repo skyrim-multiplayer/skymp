@@ -1,5 +1,14 @@
-// @ts-expect-error (TODO: Remove in 2.10.0)
-import { Actor, Form, FormType, Menu, interruptCast, castSpellImmediate, printConsole, applyAnimationVariablesToActor, ActorAnimationVariables } from 'skyrimPlatform';
+import {
+  Actor,
+  ActorAnimationVariables,
+  Form,
+  FormType,
+  Menu,
+  applyAnimationVariablesToActor,
+  castSpellImmediate,
+  interruptCast,
+  printConsole,
+} from 'skyrimPlatform';
 import {
   Armor,
   Cell,
@@ -18,51 +27,52 @@ import * as messages from '../../messages';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { ObjectReferenceEx } from '../../extensions/objectReferenceEx';
+import { RespawnNeededError } from '../../lib/errors';
 import { IdManager } from '../../lib/idManager';
 import { nameof } from '../../lib/nameof';
+import { logError, logTrace } from '../../logging';
+import { MsgType } from '../../messages';
 import { setActorValuePercentage } from '../../sync/actorvalues';
 import { applyAppearanceToPlayer } from '../../sync/appearance';
 import { applyEquipment, isBadMenuShown } from '../../sync/equipment';
 import { Inventory, applyInventory } from '../../sync/inventory';
 import { Movement } from '../../sync/movement';
 import { learnSpells, removeAllSpells } from '../../sync/spell';
-import { ModelApplyUtils } from '../../view/modelApplyUtils';
 import { FormModel, WorldModel } from '../../view/model';
-import { LoadGameService } from './loadGameService';
-import { UpdateMovementMessage } from '../messages/updateMovementMessage';
-import { ChangeValuesMessage } from '../messages/changeValuesMessage';
-import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
-import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
-import { RagdollService } from './ragdollService';
-import { UpdateAppearanceMessage } from '../messages/updateAppearanceMessage';
-import { TeleportMessage } from '../messages/teleportMessage';
-import { DeathStateContainerMessage } from '../messages/deathStateContainerMessage';
-import { RespawnNeededError } from '../../lib/errors';
-import { OpenContainerMessage } from '../messages/openContainerMessage';
-import { ActivateMessage } from '../messages/activateMessage';
-import { ClientListener, CombinedController, Sp } from './clientListener';
-import { HostStartMessage } from '../messages/hostStartMessage';
-import { HostStopMessage } from '../messages/hostStopMessage';
-import { ConnectionMessage } from '../events/connectionMessage';
-import { SetInventoryMessage } from '../messages/setInventoryMessage';
-import { CreateActorMessage, CreateActorMessageAdditionalProps } from '../messages/createActorMessage';
-import { DestroyActorMessage } from '../messages/destroyActorMessage';
-import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
-import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
-import { TeleportMessage2 } from '../messages/teleportMessage2';
-
+import { ModelApplyUtils } from '../../view/modelApplyUtils';
 // TODO: refactor worldViewMisc into service
 import {
   getObjectReference,
   getViewFromStorage,
   remoteIdToLocalId,
 } from '../../view/worldViewMisc';
-import { TimeService } from './timeService';
-import { logTrace, logError } from '../../logging';
-
+import { ConnectionMessage } from '../events/connectionMessage';
+import { ActivateMessage } from '../messages/activateMessage';
+import { ChangeValuesMessage } from '../messages/changeValuesMessage';
+import {
+  CreateActorMessage,
+  CreateActorMessageAdditionalProps,
+} from '../messages/createActorMessage';
+import { DeathStateContainerMessage } from '../messages/deathStateContainerMessage';
+import { DestroyActorMessage } from '../messages/destroyActorMessage';
+import { HostStartMessage } from '../messages/hostStartMessage';
+import { HostStopMessage } from '../messages/hostStopMessage';
+import { OpenContainerMessage } from '../messages/openContainerMessage';
+import { SetInventoryMessage } from '../messages/setInventoryMessage';
+import { SetRaceMenuOpenMessage } from '../messages/setRaceMenuOpenMessage';
 import { SpellCastMessage } from '../messages/spellCastMessage';
+import { TeleportMessage } from '../messages/teleportMessage';
+import { TeleportMessage2 } from '../messages/teleportMessage2';
 import { UpdateAnimVariablesMessage } from '../messages/updateAnimVariablesMessage';
-import { MsgType } from '../../messages';
+import { UpdateAnimationMessage } from '../messages/updateAnimationMessage';
+import { UpdateAppearanceMessage } from '../messages/updateAppearanceMessage';
+import { UpdateEquipmentMessage } from '../messages/updateEquipmentMessage';
+import { UpdateMovementMessage } from '../messages/updateMovementMessage';
+import { UpdatePropertyMessage } from '../messages/updatePropertyMessage';
+import { ClientListener, CombinedController, Sp } from './clientListener';
+import { LoadGameService } from './loadGameService';
+import { RagdollService } from './ragdollService';
+import { TimeService } from './timeService';
 
 export const getPcInventory = (): Inventory | undefined => {
   const res = storage['pcInv'];
@@ -102,28 +112,65 @@ export class RemoteServer extends ClientListener {
   constructor(private sp: Sp, private controller: CombinedController) {
     super();
 
-    this.controller.emitter.on("hostStartMessage", (e) => this.onHostStartMessage(e));
-    this.controller.emitter.on("hostStopMessage", (e) => this.onHostStopMessage(e));
-    this.controller.emitter.on("setInventoryMessage", (e) => this.onSetInventoryMessage(e));
-    this.controller.emitter.on("openContainerMessage", (e) => this.onOpenContainerMessage(e));
-    this.controller.emitter.on("updateMovementMessage", (e) => this.onUpdateMovementMessage(e));
-    this.controller.emitter.on("updateAnimationMessage", (e) => this.onUpdateAnimationMessage(e));
-    this.controller.emitter.on("updateEquipmentMessage", (e) => this.onUpdateEquipmentMessage(e));
-    this.controller.emitter.on("changeValuesMessage", (e) => this.onChangeValuesMessage(e));
-    this.controller.emitter.on("updateAppearanceMessage", (e) => this.onUpdateAppearanceMessage(e));
-    this.controller.emitter.on("teleportMessage", (e) => this.onTeleportMessage(e));
-    this.controller.emitter.on("teleportMessage2", (e) => this.onTeleportMessage(e));
-    this.controller.emitter.on("createActorMessage", (e) => this.onCreateActorMessage(e));
-    this.controller.emitter.on("destroyActorMessage", (e) => this.onDestroyActorMessage(e));
-    this.controller.emitter.on("setRaceMenuOpenMessage", (e) => this.onSetRaceMenuOpenMessage(e));
-    this.controller.emitter.on("updatePropertyMessage", (e) => this.onUpdatePropertyMessage(e));
-    this.controller.emitter.on("deathStateContainerMessage", (e) => this.onDeathStateContainerMessage(e));
+    this.controller.emitter.on('hostStartMessage', (e) =>
+      this.onHostStartMessage(e),
+    );
+    this.controller.emitter.on('hostStopMessage', (e) =>
+      this.onHostStopMessage(e),
+    );
+    this.controller.emitter.on('setInventoryMessage', (e) =>
+      this.onSetInventoryMessage(e),
+    );
+    this.controller.emitter.on('openContainerMessage', (e) =>
+      this.onOpenContainerMessage(e),
+    );
+    this.controller.emitter.on('updateMovementMessage', (e) =>
+      this.onUpdateMovementMessage(e),
+    );
+    this.controller.emitter.on('updateAnimationMessage', (e) =>
+      this.onUpdateAnimationMessage(e),
+    );
+    this.controller.emitter.on('updateEquipmentMessage', (e) =>
+      this.onUpdateEquipmentMessage(e),
+    );
+    this.controller.emitter.on('changeValuesMessage', (e) =>
+      this.onChangeValuesMessage(e),
+    );
+    this.controller.emitter.on('updateAppearanceMessage', (e) =>
+      this.onUpdateAppearanceMessage(e),
+    );
+    this.controller.emitter.on('teleportMessage', (e) =>
+      this.onTeleportMessage(e),
+    );
+    this.controller.emitter.on('teleportMessage2', (e) =>
+      this.onTeleportMessage(e),
+    );
+    this.controller.emitter.on('createActorMessage', (e) =>
+      this.onCreateActorMessage(e),
+    );
+    this.controller.emitter.on('destroyActorMessage', (e) =>
+      this.onDestroyActorMessage(e),
+    );
+    this.controller.emitter.on('setRaceMenuOpenMessage', (e) =>
+      this.onSetRaceMenuOpenMessage(e),
+    );
+    this.controller.emitter.on('updatePropertyMessage', (e) =>
+      this.onUpdatePropertyMessage(e),
+    );
+    this.controller.emitter.on('deathStateContainerMessage', (e) =>
+      this.onDeathStateContainerMessage(e),
+    );
 
-    this.controller.emitter.on("connectionAccepted", () => this.handleConnectionAccepted());
+    this.controller.emitter.on('connectionAccepted', () =>
+      this.handleConnectionAccepted(),
+    );
 
-    this.controller.emitter.on("spellCastMessage", (e) => this.onSpellCastMessage(e));
-    this.controller.emitter.on("updateAnimVariablesMessage", (e) => this.onUpdateAnimVariablesMessage(e));
-
+    this.controller.emitter.on('spellCastMessage', (e) =>
+      this.onSpellCastMessage(e),
+    );
+    this.controller.emitter.on('updateAnimVariablesMessage', (e) =>
+      this.onUpdateAnimVariablesMessage(e),
+    );
   }
 
   private onHostStartMessage(event: ConnectionMessage<HostStartMessage>) {
@@ -154,7 +201,9 @@ export class RemoteServer extends ClientListener {
     }
   }
 
-  private onSetInventoryMessage(event: ConnectionMessage<SetInventoryMessage>): void {
+  private onSetInventoryMessage(
+    event: ConnectionMessage<SetInventoryMessage>,
+  ): void {
     this.numSetInventory++;
 
     const msg = event.message;
@@ -164,7 +213,7 @@ export class RemoteServer extends ClientListener {
       let blocked = false;
 
       this.controller.emitter.emit('queryBlockSetInventoryEvent', {
-        block: () => blocked = true
+        block: () => (blocked = true),
       });
 
       if (!blocked) {
@@ -173,7 +222,9 @@ export class RemoteServer extends ClientListener {
     });
   }
 
-  private onOpenContainerMessage(event: ConnectionMessage<OpenContainerMessage>): void {
+  private onOpenContainerMessage(
+    event: ConnectionMessage<OpenContainerMessage>,
+  ): void {
     once('update', async () => {
       await Utility.wait(0.1); // Give a chance to update inventory
 
@@ -182,7 +233,14 @@ export class RemoteServer extends ClientListener {
       const refr = ObjectReference.from(Game.getFormEx(localId));
 
       if (refr === null) {
-        logError(this, 'onOpenContainerMessage - refr not found', 'remoteId', remoteId.toString(16), 'localId', localId.toString(16));
+        logError(
+          this,
+          'onOpenContainerMessage - refr not found',
+          'remoteId',
+          remoteId.toString(16),
+          'localId',
+          localId.toString(16),
+        );
         return;
       }
 
@@ -192,10 +250,10 @@ export class RemoteServer extends ClientListener {
       const baseType = baseObject?.getType();
 
       let functionChecker: (() => boolean) | null = null;
-      let factName = "";
+      let factName = '';
       let delaySeconds = -1.0;
       if (baseType === FormType.Container) {
-        functionChecker = () => Ui.isMenuOpen("ContainerMenu");
+        functionChecker = () => Ui.isMenuOpen('ContainerMenu');
         factName = "'ContainerMenu open'";
         delaySeconds = 0.0;
       } else if (baseType === FormType.Furniture) {
@@ -205,7 +263,11 @@ export class RemoteServer extends ClientListener {
       }
 
       if (functionChecker === null) {
-        logTrace(this, "onOpenContainerMesage - not a container or furniture", baseType);
+        logTrace(
+          this,
+          'onOpenContainerMesage - not a container or furniture',
+          baseType,
+        );
         return;
       }
 
@@ -213,42 +275,78 @@ export class RemoteServer extends ClientListener {
       // This differs from Skyrim's behavior, where it's just one activation.
 
       (async () => {
-        logTrace(this, "onOpenContainerMesage - waiting for", factName, "to be true");
+        logTrace(
+          this,
+          'onOpenContainerMesage - waiting for',
+          factName,
+          'to be true',
+        );
         while (!functionChecker()) await Utility.wait(0.1);
 
-        logTrace(this, "onOpenContainerMesage - waiting for", factName, "to be false");
+        logTrace(
+          this,
+          'onOpenContainerMesage - waiting for',
+          factName,
+          'to be false',
+        );
         while (functionChecker()) await Utility.wait(0.1);
 
-        logTrace(this, "onOpenContainerMesage - menu closed", factName);
+        logTrace(this, 'onOpenContainerMesage - menu closed', factName);
 
         const message: ActivateMessage = {
           t: messages.MsgType.Activate,
           data: {
-            caster: 0x14, target: event.message.target, isSecondActivation: true
-          }
+            caster: 0x14,
+            target: event.message.target,
+            isSecondActivation: true,
+          },
         };
 
-        logTrace(this, "onOpenContainerMesage - waiting", delaySeconds, "seconds before sending ActivateMessage");
+        logTrace(
+          this,
+          'onOpenContainerMesage - waiting',
+          delaySeconds,
+          'seconds before sending ActivateMessage',
+        );
 
         Utility.waitMenuMode(delaySeconds).then(() => {
-          this.controller.emitter.emit("sendMessage", {
+          this.controller.emitter.emit('sendMessage', {
             message: message,
-            reliability: "reliable"
+            reliability: 'reliable',
           });
 
-          logTrace(this, "onOpenContainerMesage - sent ActivateMessage", message);
+          logTrace(
+            this,
+            'onOpenContainerMesage - sent ActivateMessage',
+            message,
+          );
         });
       })();
     });
   }
 
-  private onTeleportMessage(event: ConnectionMessage<TeleportMessage> | ConnectionMessage<TeleportMessage2>): void {
+  private onTeleportMessage(
+    event:
+      | ConnectionMessage<TeleportMessage>
+      | ConnectionMessage<TeleportMessage2>,
+  ): void {
     const msg = event.message;
     once('update', () => {
-      const id = ("idx" in msg && typeof msg.idx === "number") ? this.getIdManager().getId(msg.idx) : this.getMyActorIndex();
-      const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
-      logTrace(this,
-        `Teleporting id`, id, `refrId`, refr?.getFormID().toString(16), `...`,
+      const id =
+        'idx' in msg && typeof msg.idx === 'number'
+          ? this.getIdManager().getId(msg.idx)
+          : this.getMyActorIndex();
+      const refr =
+        id === this.getMyActorIndex()
+          ? Game.getPlayer()
+          : getObjectReference(id);
+      logTrace(
+        this,
+        `Teleporting id`,
+        id,
+        `refrId`,
+        refr?.getFormID().toString(16),
+        `...`,
         msg.pos,
         'cell/world is',
         msg.worldOrCell.toString(16),
@@ -279,7 +377,9 @@ export class RemoteServer extends ClientListener {
     });
   }
 
-  private onCreateActorMessage(event: ConnectionMessage<CreateActorMessage>): void {
+  private onCreateActorMessage(
+    event: ConnectionMessage<CreateActorMessage>,
+  ): void {
     const msg = event.message;
     if (this.skipFormViewCreation(msg)) {
       const refrId = msg.refrId!;
@@ -298,19 +398,24 @@ export class RemoteServer extends ClientListener {
 
             ModelApplyUtils.applyModelNodeScale(refr, msg.props.setNodeScale);
 
-            ModelApplyUtils.applyModelNodeTextureSet(refr, msg.props.setNodeTextureSet);
+            ModelApplyUtils.applyModelNodeTextureSet(
+              refr,
+              msg.props.setNodeTextureSet,
+            );
 
             ModelApplyUtils.applyModelIsDisabled(refr, !!msg.props['disabled']);
 
             // TODO: move to a separate module
             const animation = msg.props.lastAnimation;
-            if (typeof animation === "string") {
+            if (typeof animation === 'string') {
               const refrid = refr.getFormID();
 
               (async () => {
                 for (let i = 0; i < 5; i++) {
                   // retry. pillars in bleakfalls are not reliable for some reason
-                  let res2 = ObjectReference.from(Game.getFormEx(refrid))?.playAnimation(animation);
+                  let res2 = ObjectReference.from(
+                    Game.getFormEx(refrid),
+                  )?.playAnimation(animation);
                   if (res2) {
                     break;
                   }
@@ -319,22 +424,33 @@ export class RemoteServer extends ClientListener {
               })();
             }
 
-
             let displayName = msg.props.displayName;
 
             // keep in sync with spSnippetService.ts
-            if (typeof displayName === "string") {
-
+            if (typeof displayName === 'string') {
               const replaceValue = refr.getBaseObject()?.getName();
 
               if (replaceValue !== undefined) {
-                displayName = displayName.replace(/%original_name%/g, replaceValue);
+                displayName = displayName.replace(
+                  /%original_name%/g,
+                  replaceValue,
+                );
               } else {
-                logError(this, "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was", refr.getFormID().toString(16));
+                logError(
+                  this,
+                  "Couldn't get a replaceValue for SetDisplayName, refr.getFormID() was",
+                  refr.getFormID().toString(16),
+                );
               }
 
               refr.setDisplayName(displayName, true);
-              logTrace(this, `calling setDisplayName`, displayName, `for`, refr.getFormID().toString(16));
+              logTrace(
+                this,
+                `calling setDisplayName`,
+                displayName,
+                `for`,
+                refr.getFormID().toString(16),
+              );
             }
           }
         } else {
@@ -344,7 +460,7 @@ export class RemoteServer extends ClientListener {
       return;
     }
 
-    logTrace(this, "Create actor");
+    logTrace(this, 'Create actor');
 
     const i = this.getIdManager().allocateIdFor(msg.idx);
     if (this.worldModel.forms.length <= i) {
@@ -367,6 +483,7 @@ export class RemoteServer extends ClientListener {
         isDead: false,
         healthPercentage: 1.0,
         speed: 0,
+          isMounted: false,
       };
     }
 
@@ -399,17 +516,26 @@ export class RemoteServer extends ClientListener {
 
     if (msg.props) {
       for (const propName in msg.props) {
-        (form as Record<string, unknown>)[propName] = msg.props[propName as keyof CreateActorMessageAdditionalProps];
+        (form as Record<string, unknown>)[propName] =
+          msg.props[propName as keyof CreateActorMessageAdditionalProps];
       }
     }
 
-    msg.customPropsJsonDumps.forEach(element => {
+    msg.customPropsJsonDumps.forEach((element) => {
       let parsed: unknown;
       try {
         parsed = JSON.parse(element.propValueJsonDump);
       } catch (e) {
         if (e instanceof SyntaxError) {
-          logError(this, "createActor", msg.refrId?.toString(16), "failed to parse custom prop", element.propName, element.propValueJsonDump, e.message);
+          logError(
+            this,
+            'createActor',
+            msg.refrId?.toString(16),
+            'failed to parse custom prop',
+            element.propName,
+            element.propValueJsonDump,
+            e.message,
+          );
         } else {
           throw e;
         }
@@ -428,18 +554,23 @@ export class RemoteServer extends ClientListener {
     }
 
     if (msg.props && msg.props.isRaceMenuOpen && msg.isMe) {
-      this.onSetRaceMenuOpenMessage({ message: { t: MsgType.SetRaceMenuOpen, open: true } });
+      this.onSetRaceMenuOpenMessage({
+        message: { t: MsgType.SetRaceMenuOpen, open: true },
+      });
     }
 
     const numSetInventory = this.numSetInventory;
 
     const applyPcInv = () => {
       if (msg.equipment) {
-        applyEquipment(Game.getPlayer()!, msg.equipment)
+        applyEquipment(Game.getPlayer()!, msg.equipment);
       }
 
       if (numSetInventory !== this.numSetInventory) {
-        logTrace(this, 'Skipping inventory apply due to newer setInventory message');
+        logTrace(
+          this,
+          'Skipping inventory apply due to newer setInventory message',
+        );
         return;
       }
 
@@ -447,8 +578,8 @@ export class RemoteServer extends ClientListener {
         this.onSetInventoryMessage({
           message: {
             t: MsgType.SetInventory,
-            inventory: msg.props.inventory
-          }
+            inventory: msg.props.inventory,
+          },
         });
       }
     };
@@ -463,8 +594,10 @@ export class RemoteServer extends ClientListener {
           if (player) {
             removeAllSpells(player);
             learnSpells(player, learnedSpells);
-            logTrace(this,
-              `player learnedSpells:`, JSON.stringify(learnedSpells),
+            logTrace(
+              this,
+              `player learnedSpells:`,
+              JSON.stringify(learnedSpells),
             );
           }
         });
@@ -473,10 +606,10 @@ export class RemoteServer extends ClientListener {
 
     if (msg.isMe) {
       if (msg.props?.isDead) {
-        once("update", () => {
-          this.controller.emitter.emit("applyDeathStateEvent", {
+        once('update', () => {
+          this.controller.emitter.emit('applyDeathStateEvent', {
             actor: Game.getPlayer()!,
-            isDead: true
+            isDead: true,
           });
         });
       }
@@ -517,7 +650,7 @@ export class RemoteServer extends ClientListener {
               const sqr = (x: number) => x * x;
               const distance = Math.sqrt(
                 sqr(pos[0] - msg.transform.pos[0]) +
-                sqr(pos[1] - msg.transform.pos[1]),
+                  sqr(pos[1] - msg.transform.pos[1]),
               );
               if (distance < 256) {
                 break;
@@ -577,32 +710,42 @@ export class RemoteServer extends ClientListener {
               loadOrder.push(this.sp.Game.getModName(i));
             }
 
-            logTrace(this, `loading game in world/cell`, msg.transform.worldOrCell.toString(16));
-            const loadGameService = this.controller.lookupListener(LoadGameService);
+            logTrace(
+              this,
+              `loading game in world/cell`,
+              msg.transform.worldOrCell.toString(16),
+            );
+            const loadGameService =
+              this.controller.lookupListener(LoadGameService);
             loadGameService.loadGame(
               msg.transform.pos,
               msg.transform.rot,
               msg.transform.worldOrCell,
               msg.appearance
                 ? {
-                  name: msg.appearance.name,
-                  raceId: msg.appearance.raceId,
+                    name: msg.appearance.name,
+                    raceId: msg.appearance.raceId,
 
-                  // TODO: In types, isFemale is under face, but in the reality SP expects it here. Fix required.
-                  // @ts-expect-error
-                  isFemale: msg.appearance.isFemale,
+                    // TODO: In types, isFemale is under face, but in the reality SP expects it here. Fix required.
+                    // @ts-expect-error
+                    isFemale: msg.appearance.isFemale,
 
-                  face: {
-                    hairColor: msg.appearance.hairColor,
-                    bodySkinColor: msg.appearance.skinColor,
-                    headTextureSetId: msg.appearance.headTextureSetId,
-                    headPartIds: msg.appearance.headpartIds,
-                    presets: msg.appearance.presets
-                  },
-                }
+                    face: {
+                      hairColor: msg.appearance.hairColor,
+                      bodySkinColor: msg.appearance.skinColor,
+                      headTextureSetId: msg.appearance.headTextureSetId,
+                      headPartIds: msg.appearance.headpartIds,
+                      presets: msg.appearance.presets,
+                    },
+                  }
                 : undefined,
               loadOrder,
-              { minutes: 0, seconds: 0, hours: this.controller.lookupListener(TimeService).getTime().newGameHourValue }
+              {
+                minutes: 0,
+                seconds: 0,
+                hours: this.controller.lookupListener(TimeService).getTime()
+                  .newGameHourValue,
+              },
             );
             once('update', () => {
               applyPcInv();
@@ -618,7 +761,9 @@ export class RemoteServer extends ClientListener {
     }
   }
 
-  private onDestroyActorMessage(event: ConnectionMessage<DestroyActorMessage>): void {
+  private onDestroyActorMessage(
+    event: ConnectionMessage<DestroyActorMessage>,
+  ): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
@@ -648,7 +793,9 @@ export class RemoteServer extends ClientListener {
     this.getIdManager().freeIdFor(msg.idx);
   }
 
-  private onUpdateMovementMessage(event: ConnectionMessage<UpdateMovementMessage>): void {
+  private onUpdateMovementMessage(
+    event: ConnectionMessage<UpdateMovementMessage>,
+  ): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
@@ -656,7 +803,12 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      logError(this, `onUpdateMovementMessage - Form with idx`, msg.idx, `not found`);
+      logError(
+        this,
+        `onUpdateMovementMessage - Form with idx`,
+        msg.idx,
+        `not found`,
+      );
       return;
     }
 
@@ -667,7 +819,9 @@ export class RemoteServer extends ClientListener {
     form.numMovementChanges++;
   }
 
-  private onUpdateAnimationMessage(event: ConnectionMessage<UpdateAnimationMessage>): void {
+  private onUpdateAnimationMessage(
+    event: ConnectionMessage<UpdateAnimationMessage>,
+  ): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
@@ -675,14 +829,21 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      logError(this, `onUpdateAnimationMessage - Form with idx`, msg.idx, `not found`);
+      logError(
+        this,
+        `onUpdateAnimationMessage - Form with idx`,
+        msg.idx,
+        `not found`,
+      );
       return;
     }
 
     form.animation = msg.data;
   }
 
-  private onUpdateAppearanceMessage(event: ConnectionMessage<UpdateAppearanceMessage>): void {
+  private onUpdateAppearanceMessage(
+    event: ConnectionMessage<UpdateAppearanceMessage>,
+  ): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
@@ -690,7 +851,12 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      logError(this, `onUpdateAppearanceMessage - Form with idx`, msg.idx, `not found`);
+      logError(
+        this,
+        `onUpdateAppearanceMessage - Form with idx`,
+        msg.idx,
+        `not found`,
+      );
       return;
     }
 
@@ -703,14 +869,16 @@ export class RemoteServer extends ClientListener {
     const newAppearance = msg.data;
 
     if (i === this.getMyActorIndex() && newAppearance) {
-      this.controller.once("update", () => {
+      this.controller.once('update', () => {
         applyAppearanceToPlayer(newAppearance);
-        logTrace(this, "Applied appearance to the player");
+        logTrace(this, 'Applied appearance to the player');
       });
     }
   }
 
-  private onUpdateEquipmentMessage(event: ConnectionMessage<UpdateEquipmentMessage>): void {
+  private onUpdateEquipmentMessage(
+    event: ConnectionMessage<UpdateEquipmentMessage>,
+  ): void {
     const msg = event.message;
 
     const i = this.getIdManager().getId(msg.idx);
@@ -718,14 +886,21 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[i];
 
     if (form === undefined) {
-      logError(this, `onUpdateEquipmentMessage - Form with idx`, msg.idx, `not found`);
+      logError(
+        this,
+        `onUpdateEquipmentMessage - Form with idx`,
+        msg.idx,
+        `not found`,
+      );
       return;
     }
 
     form.equipment = msg.data;
   }
 
-  private onUpdatePropertyMessage(event: ConnectionMessage<UpdatePropertyMessage>): void {
+  private onUpdatePropertyMessage(
+    event: ConnectionMessage<UpdatePropertyMessage>,
+  ): void {
     const msg = event.message;
     const msgData = this.extractUpdatePropertyMessageData(msg);
 
@@ -754,7 +929,9 @@ export class RemoteServer extends ClientListener {
     (form as Record<string, unknown>)[msg.propName] = msgData;
   }
 
-  private onDeathStateContainerMessage(event: ConnectionMessage<DeathStateContainerMessage>): void {
+  private onDeathStateContainerMessage(
+    event: ConnectionMessage<DeathStateContainerMessage>,
+  ): void {
     const msg = event.message;
 
     logTrace(this, `Received death state:`, JSON.stringify(msg.tIsDead));
@@ -763,12 +940,21 @@ export class RemoteServer extends ClientListener {
     const form = this.worldModel.forms[id];
 
     if (form === undefined) {
-      logError(this, `onDeathStateContainerMessage - Form with idx`, msg.tIsDead.idx, `not found`);
+      logError(
+        this,
+        `onDeathStateContainerMessage - Form with idx`,
+        msg.tIsDead.idx,
+        `not found`,
+      );
       return;
     }
 
     if (msg.tIsDead.propName !== nameof<FormModel>('isDead')) {
-      logError(this, `onDeathStateContainerMessage - Invalid propName`, msg.tIsDead.propName);
+      logError(
+        this,
+        `onDeathStateContainerMessage - Invalid propName`,
+        msg.tIsDead.propName,
+      );
       return;
     }
 
@@ -781,7 +967,9 @@ export class RemoteServer extends ClientListener {
     if (msg.tChangeValues) {
       this.onChangeValuesMessage({ message: msg.tChangeValues });
     }
-    once('update', () => this.onUpdatePropertyMessage({ message: msg.tIsDead }));
+    once('update', () =>
+      this.onUpdatePropertyMessage({ message: msg.tIsDead }),
+    );
 
     if (msg.tTeleport) {
       this.onTeleportMessage({ message: msg.tTeleport });
@@ -794,9 +982,9 @@ export class RemoteServer extends ClientListener {
           : Actor.from(Game.getFormEx(remoteIdToLocalId(form.refrId ?? 0)));
       if (actor) {
         try {
-          this.controller.emitter.emit("applyDeathStateEvent", {
+          this.controller.emitter.emit('applyDeathStateEvent', {
             actor: actor,
-            isDead: msgData
+            isDead: msgData,
           });
         } catch (e) {
           if (e instanceof RespawnNeededError) {
@@ -815,34 +1003,41 @@ export class RemoteServer extends ClientListener {
     this.worldModel.playerCharacterFormIdx = -1;
     this.worldModel.playerCharacterRefrId = 0;
 
-    logTrace(this, "Handle connection accepted");
+    logTrace(this, 'Handle connection accepted');
   }
 
-  private onChangeValuesMessage(event: ConnectionMessage<ChangeValuesMessage>): void {
+  private onChangeValuesMessage(
+    event: ConnectionMessage<ChangeValuesMessage>,
+  ): void {
     const msg = event.message;
 
     once('update', () => {
       const id = this.getIdManager().getId(msg.idx);
-      const refr = id === this.getMyActorIndex() ? Game.getPlayer() : getObjectReference(id);
+      const refr =
+        id === this.getMyActorIndex()
+          ? Game.getPlayer()
+          : getObjectReference(id);
       const ac = Actor.from(refr);
       if (!ac) {
         return;
       }
 
       const { health, stamina, magicka } = msg.data;
-      if (typeof health === "number") {
+      if (typeof health === 'number') {
         setActorValuePercentage(ac, 'health', health);
       }
-      if (typeof stamina === "number") {
+      if (typeof stamina === 'number') {
         setActorValuePercentage(ac, 'stamina', stamina);
       }
-      if (typeof magicka === "number") {
+      if (typeof magicka === 'number') {
         setActorValuePercentage(ac, 'magicka', magicka);
       }
     });
   }
 
-  private onSetRaceMenuOpenMessage(event: ConnectionMessage<SetRaceMenuOpenMessage>): void {
+  private onSetRaceMenuOpenMessage(
+    event: ConnectionMessage<SetRaceMenuOpenMessage>,
+  ): void {
     const msg = event.message;
 
     if (msg.open) {
@@ -878,18 +1073,22 @@ export class RemoteServer extends ClientListener {
   }
 
   private get worldModel(): WorldModel {
-    if (typeof storage["worldModel"] === "function") {
-      storage["worldModel"] = { forms: [], playerCharacterFormIdx: -1, playerCharacterRefrId: 0 };
+    if (typeof storage['worldModel'] === 'function') {
+      storage['worldModel'] = {
+        forms: [],
+        playerCharacterFormIdx: -1,
+        playerCharacterRefrId: 0,
+      };
     }
-    return storage["worldModel"] as WorldModel;
+    return storage['worldModel'] as WorldModel;
   }
 
   private get idManager_(): IdManager {
-    if (typeof storage["idManager"] === "function") {
+    if (typeof storage['idManager'] === 'function') {
       // Note: full IdManager object preserved across hot-reloads, including methods.
-      storage["idManager"] = new IdManager();
+      storage['idManager'] = new IdManager();
     }
-    return storage["idManager"] as IdManager;
+    return storage['idManager'] as IdManager;
   }
 
   private onceLoad(
@@ -906,20 +1105,27 @@ export class RemoteServer extends ClientListener {
         if (maxAttempts > 0) {
           once('update', () => this.onceLoad(refrId, callback, maxAttempts));
         } else {
-          logError(this, 'Failed to load object reference ' + refrId.toString(16));
+          logError(
+            this,
+            'Failed to load object reference ' + refrId.toString(16),
+          );
         }
       }
     });
-  };
+  }
 
   private skipFormViewCreation(
     msg: UpdatePropertyMessage | CreateActorMessage,
   ) {
     // Optimization added in #1186, however it doesn't work for doors for some reason
-    return msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR';
-  };
+    return (
+      msg.refrId && msg.refrId < 0xff000000 && msg.baseRecordType !== 'DOOR'
+    );
+  }
 
-  private extractUpdatePropertyMessageData(updatePropertyMessage: UpdatePropertyMessage) {
+  private extractUpdatePropertyMessageData(
+    updatePropertyMessage: UpdatePropertyMessage,
+  ) {
     let msgData: unknown = updatePropertyMessage.data;
 
     if (updatePropertyMessage.dataDump !== undefined) {
@@ -927,7 +1133,11 @@ export class RemoteServer extends ClientListener {
         msgData = JSON.parse(updatePropertyMessage.dataDump);
       } catch (e) {
         if (e instanceof SyntaxError) {
-          logError(this, 'extractUpdatePropertyMessageData - Failed to parse dataDump', updatePropertyMessage.dataDump);
+          logError(
+            this,
+            'extractUpdatePropertyMessageData - Failed to parse dataDump',
+            updatePropertyMessage.dataDump,
+          );
           return;
         } else {
           throw e;
@@ -950,27 +1160,42 @@ export class RemoteServer extends ClientListener {
       const actorAnimationVariables: ActorAnimationVariables = {
         booleans: new Uint8Array(msg.data.actorAnimationVariables.booleans),
         floats: new Uint8Array(msg.data.actorAnimationVariables.floats),
-        integers: new Uint8Array(msg.data.actorAnimationVariables.integers)
+        integers: new Uint8Array(msg.data.actorAnimationVariables.integers),
       };
 
       if (msg.data.interruptCast) {
-        interruptCast(ac.getFormID(), msg.data.castingSource, actorAnimationVariables);
+        interruptCast(
+          ac.getFormID(),
+          msg.data.castingSource,
+          actorAnimationVariables,
+        );
         return;
       }
 
       const spell = ac.getEquippedSpell(msg.data.castingSource);
       if (spell) {
-        castSpellImmediate(ac.getFormID(), msg.data.castingSource, spell.getFormID(), remoteIdToLocalId(msg.data.target),
-          msg.data.aimAngle, msg.data.aimHeading, actorAnimationVariables);
+        castSpellImmediate(
+          ac.getFormID(),
+          msg.data.castingSource,
+          spell.getFormID(),
+          remoteIdToLocalId(msg.data.target),
+          msg.data.aimAngle,
+          msg.data.aimHeading,
+          actorAnimationVariables,
+        );
       }
     });
   }
 
-  private onUpdateAnimVariablesMessage(event: ConnectionMessage<UpdateAnimVariablesMessage>): void {
+  private onUpdateAnimVariablesMessage(
+    event: ConnectionMessage<UpdateAnimVariablesMessage>,
+  ): void {
     const msg = event.message;
 
     once('update', () => {
-      const ac = Actor.from(Game.getFormEx(remoteIdToLocalId(msg.data.actorRemoteId)));
+      const ac = Actor.from(
+        Game.getFormEx(remoteIdToLocalId(msg.data.actorRemoteId)),
+      );
       if (!ac) {
         return;
       }
@@ -978,13 +1203,20 @@ export class RemoteServer extends ClientListener {
       const actorAnimationVariables: ActorAnimationVariables = {
         booleans: new Uint8Array(msg.data.actorAnimationVariables.booleans),
         floats: new Uint8Array(msg.data.actorAnimationVariables.floats),
-        integers: new Uint8Array(msg.data.actorAnimationVariables.integers)
+        integers: new Uint8Array(msg.data.actorAnimationVariables.integers),
       };
 
-      const isApplyed = applyAnimationVariablesToActor(ac.getFormID(), actorAnimationVariables);
+      const isApplyed = applyAnimationVariablesToActor(
+        ac.getFormID(),
+        actorAnimationVariables,
+      );
 
       if (!isApplyed) {
-        logError(this, 'Failed apply AnimationVariables to actor with id: ' + ac.getFormID().toString(16));
+        logError(
+          this,
+          'Failed apply AnimationVariables to actor with id: ' +
+            ac.getFormID().toString(16),
+        );
       }
     });
   }

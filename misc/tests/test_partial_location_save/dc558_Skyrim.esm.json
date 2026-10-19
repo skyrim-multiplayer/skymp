@@ -1,9 +1,5 @@
 {
-  "angle": [
-    0.0,
-    -0.0,
-    111.72675323486328
-  ],
+  "angle": [0.0, -0.0, 111.72675323486328],
   "appearanceDump": null,
   "baseContainerAdded": true,
   "baseDesc": "8cacc:Skyrim.esm",
@@ -35,29 +31,14 @@
   "learnedSpells": [],
   "magickaPercentage": 1.0,
   "nextRelootDatetime": 0,
-  "position": [
-    25.0,
-    -707.0,
-    0.0
-  ],
+  "position": [25.0, -707.0, 0.0],
   "profileId": -1,
   "recType": 1,
   "spawnDelay": 0.0,
   "spawnPoint_cellOrWorldDesc": "3c:Skyrim.esm",
-  "spawnPoint_pos": [
-    133857.0,
-    -61130.0,
-    14662.0
-  ],
-  "spawnPoint_rot": [
-    0.0,
-    0.0,
-    72.0
-  ],
+  "spawnPoint_pos": [133857.0, -61130.0, 14662.0],
+  "spawnPoint_rot": [0.0, 0.0, 72.0],
   "staminaPercentage": 1.0,
-  "templateChain": [
-    "8cacc:Skyrim.esm",
-    "e4011:Skyrim.esm"
-  ],
+  "templateChain": ["8cacc:Skyrim.esm", "e4011:Skyrim.esm"],
   "worldOrCellDesc": "37ee0:Skyrim.esm"
 }
