@@ -4,6 +4,7 @@ if(MSVC)
     file(GLOB_RECURSE sources "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
     add_library(platform_lib STATIC ${sources})
     target_link_libraries(platform_lib PUBLIC viet)
+    target_compile_features(platform_lib PUBLIC cxx_std_23)
     target_include_directories(platform_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
     target_include_directories(platform_lib PUBLIC "${SKYRIM_PLATFORM_SOURCE_DIR}/src/third_party")
 
