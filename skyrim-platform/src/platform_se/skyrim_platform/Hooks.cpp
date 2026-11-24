@@ -90,7 +90,7 @@ void BindNativeMethod(RE::BSScript::Internal::VirtualMachine* thisArg,
     hook::internal::GetAllocationBase(reinterpret_cast<void*>(realFunc));
   uintptr_t funcOffset = realFunc - moduleBase;
 
-  auto skse = (uintptr_t)GetModuleHandleA("skse64_1_6_1170.dll");
+  auto skse = (uintptr_t)GetModuleHandleA("skse64_1_7_104.dll");
 
   uintptr_t isLongSignature =
     moduleBase == skse ? *reinterpret_cast<uint8_t*>(raw + 0x58) : 0;
