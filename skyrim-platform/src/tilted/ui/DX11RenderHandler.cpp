@@ -57,16 +57,6 @@ void DX11RenderHandler::Render(
   m_pSpriteBatch->Begin(DirectX::SpriteSortMode_Deferred,
                         m_pStates->NonPremultiplied());
 
-  if (Visible()) {
-    std::unique_lock<std::mutex> _(m_textureLock);
-
-    if (m_pTextureView) {
-      m_pSpriteBatch->Draw(m_pTextureView.Get(),
-                           DirectX::SimpleMath::Vector2(0.f, 0.f), nullptr,
-                           DirectX::Colors::White, 0.f);
-    }
-  }
-
   // obtainTextsToDraw is expected to do nothing if IsVisible is set to false
   // NB: this code is active even if browser backend is nirnlab (for now)
   obtainTextsToDraw([&](const TextToDraw& textToDraw) {
@@ -95,6 +85,16 @@ void DX11RenderHandler::Render(
                      textToDraw.rotation, origin, textToDraw.size,
                      textToDraw.effects, textToDraw.layerDepth);
   });
+
+  if (Visible()) {
+    std::unique_lock<std::mutex> _(m_textureLock);
+
+    if (m_pTextureView) {
+      m_pSpriteBatch->Draw(m_pTextureView.Get(),
+                           DirectX::SimpleMath::Vector2(0.f, 0.f), nullptr,
+                           DirectX::Colors::White, 0.f);
+    }
+  }
 
   bool& focusFlag = CEFUtils::DInputHook::ChromeFocus();
 
